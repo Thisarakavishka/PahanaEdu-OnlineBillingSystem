@@ -11,12 +11,12 @@ import java.sql.SQLException;
  */
 public class DAOUtil {
 
-    public static <T> T executeSql(Connection connection, String sql, Object... params) throws SQLException{
+    public static <T> T executeSql(Connection connection, String sql, Object... args) throws SQLException{
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            for (int i = 0; i < params.length; i++) {
-                preparedStatement.setObject((i + 1), params[i]);
+            for (int i = 0; i < args.length; i++) {
+                preparedStatement.setObject((i + 1), args[i]);
             }
 
             if (sql.trim().toUpperCase().startsWith("SELECT")) {
