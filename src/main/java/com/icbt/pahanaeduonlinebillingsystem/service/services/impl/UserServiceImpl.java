@@ -1,7 +1,7 @@
 package com.icbt.pahanaeduonlinebillingsystem.service.services.impl;
 
 import com.icbt.pahanaeduonlinebillingsystem.dto.UserDTO;
-import com.icbt.pahanaeduonlinebillingsystem.service.services.UserServices;
+import com.icbt.pahanaeduonlinebillingsystem.service.services.UserService;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Map;
  * @date 2025-07-17
  * @since 1.0
  */
-public class UserServiceImpl implements UserServices {
+public class UserServiceImpl implements UserService {
     @Override
     public boolean add(UserDTO dto) throws SQLException, ClassNotFoundException {
         return false;

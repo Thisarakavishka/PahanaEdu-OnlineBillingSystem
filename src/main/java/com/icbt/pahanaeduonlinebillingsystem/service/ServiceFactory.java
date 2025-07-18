@@ -1,5 +1,6 @@
 package com.icbt.pahanaeduonlinebillingsystem.service;
 
+import com.icbt.pahanaeduonlinebillingsystem.service.services.impl.CustomerServiceImpl;
 import com.icbt.pahanaeduonlinebillingsystem.service.services.impl.UserServiceImpl;
 
 /**
@@ -22,6 +23,8 @@ public class ServiceFactory {
         switch (type) {
             case USER_SERVICE:
                 return (T) new UserServiceImpl();
+            case CUSTOMER_SERVICE:
+                return (T) new CustomerServiceImpl();
             default:
                 throw new IllegalArgumentException("Invalid service type: " + type);
         }

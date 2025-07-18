@@ -1,12 +1,12 @@
 package com.icbt.pahanaeduonlinebillingsystem.service.services;
 
-import com.icbt.pahanaeduonlinebillingsystem.dto.UserDTO;
+import com.icbt.pahanaeduonlinebillingsystem.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.service.CrudService;
 
 /**
  * @author Thisara Kavishka
- * @date 2025-07-17
+ * @date 2025-07-18
  * @since 1.0
  */
-public interface UserServices extends CrudService<UserDTO> {
+public interface CustomerService extends CrudService<CustomerDTO> {
 }
