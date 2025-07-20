@@ -1,6 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.dao;
-
-import com.icbt.pahanaeduonlinebillingsystem.entity.SuperEntity;
+package com.icbt.pahanaeduonlinebillingsystem.common.base;
 
 import java.sql.Connection;
 import java.sql.SQLException;

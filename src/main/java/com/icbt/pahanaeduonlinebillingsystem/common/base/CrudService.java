@@ -1,6 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.service;
-
-import com.icbt.pahanaeduonlinebillingsystem.dto.SuperDTO;
+package com.icbt.pahanaeduonlinebillingsystem.common.base;
 
 import java.sql.SQLException;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.dto;
+package com.icbt.pahanaeduonlinebillingsystem.common.base;
 
 import java.io.Serializable;
 

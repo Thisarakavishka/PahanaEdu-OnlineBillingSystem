@@ -1,4 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.dao;
+package com.icbt.pahanaeduonlinebillingsystem.common.util;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

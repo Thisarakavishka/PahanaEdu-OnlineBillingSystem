@@ -1,4 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.util;
+package com.icbt.pahanaeduonlinebillingsystem.common.util;
 
 import java.io.InputStream;
 import java.sql.Connection;

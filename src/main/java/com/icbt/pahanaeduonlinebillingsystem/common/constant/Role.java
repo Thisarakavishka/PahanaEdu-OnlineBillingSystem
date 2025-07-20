@@ -1,4 +1,4 @@
-package com.icbt.pahanaeduonlinebillingsystem.constant;
+package com.icbt.pahanaeduonlinebillingsystem.common.constant;
 
 /**
  * @author Thisara Kavishka
