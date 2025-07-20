@@ -1,7 +1,9 @@
-package com.icbt.pahanaeduonlinebillingsystem.service.services.impl;
+package com.icbt.pahanaeduonlinebillingsystem.user.service.impl;
 
-import com.icbt.pahanaeduonlinebillingsystem.dto.UserDTO;
-import com.icbt.pahanaeduonlinebillingsystem.service.services.UserService;
+import com.icbt.pahanaeduonlinebillingsystem.user.dao.UserDAO;
+import com.icbt.pahanaeduonlinebillingsystem.user.dao.impl.UserDAOImpl;
+import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
+import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
 
 import java.sql.SQLException;
 import java.util.List;

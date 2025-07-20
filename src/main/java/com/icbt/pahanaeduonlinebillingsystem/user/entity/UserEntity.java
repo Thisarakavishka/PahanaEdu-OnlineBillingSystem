@@ -1,6 +1,7 @@
-package com.icbt.pahanaeduonlinebillingsystem.entity;
+package com.icbt.pahanaeduonlinebillingsystem.user.entity;
 
-import com.icbt.pahanaeduonlinebillingsystem.constant.Role;
+import com.icbt.pahanaeduonlinebillingsystem.common.base.SuperEntity;
+import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 
 import java.sql.Timestamp;
 

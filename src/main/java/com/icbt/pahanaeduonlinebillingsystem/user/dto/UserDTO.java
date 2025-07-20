@@ -1,6 +1,7 @@
-package com.icbt.pahanaeduonlinebillingsystem.dto;
+package com.icbt.pahanaeduonlinebillingsystem.user.dto;
 
-import com.icbt.pahanaeduonlinebillingsystem.constant.Role;
+import com.icbt.pahanaeduonlinebillingsystem.common.base.SuperDTO;
+import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 
 import java.sql.Timestamp;
 
