@@ -1,7 +1,7 @@
-package com.icbt.pahanaeduonlinebillingsystem.util.converter;
+package com.icbt.pahanaeduonlinebillingsystem.customer.converter;
 
-import com.icbt.pahanaeduonlinebillingsystem.dto.CustomerDTO;
-import com.icbt.pahanaeduonlinebillingsystem.entity.CustomerEntity;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
+import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 
 /**
  * @author Thisara Kavishka

@@ -1,12 +1,11 @@
-package com.icbt.pahanaeduonlinebillingsystem.service.services.impl;
+package com.icbt.pahanaeduonlinebillingsystem.customer.service.impl;
 
-import com.icbt.pahanaeduonlinebillingsystem.dao.DAOFactory;
-import com.icbt.pahanaeduonlinebillingsystem.dao.DAOTypes;
-import com.icbt.pahanaeduonlinebillingsystem.dao.daos.CustomerDAO;
-import com.icbt.pahanaeduonlinebillingsystem.dto.CustomerDTO;
-import com.icbt.pahanaeduonlinebillingsystem.service.services.CustomerService;
-import com.icbt.pahanaeduonlinebillingsystem.util.DBUtil;
-import com.icbt.pahanaeduonlinebillingsystem.util.converter.CustomerConverter;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dao.impl.CustomerDAOImpl;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dao.CustomerDAO;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
+import com.icbt.pahanaeduonlinebillingsystem.customer.service.CustomerService;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
+import com.icbt.pahanaeduonlinebillingsystem.customer.converter.CustomerConverter;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -21,8 +20,11 @@ import java.util.Map;
 public class CustomerServiceImpl implements CustomerService {
 
     private final Connection connection = DBUtil.getConnection();
-    private final CustomerDAO customerDAO = DAOFactory.getInstance().getDAO(DAOTypes.CUSTOMER_DAO);
+    private final CustomerDAO customerDAO;
 
+    public CustomerServiceImpl() {
+        customerDAO = new CustomerDAOImpl();
+    }
 
     @Override
     public boolean add(CustomerDTO dto) throws SQLException, ClassNotFoundException {

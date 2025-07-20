@@ -1,10 +1,8 @@
-package com.icbt.pahanaeduonlinebillingsystem.servlet;
+package com.icbt.pahanaeduonlinebillingsystem.customer.servlet;
 
-import com.icbt.pahanaeduonlinebillingsystem.dto.CustomerDTO;
-import com.icbt.pahanaeduonlinebillingsystem.service.ServiceFactory;
-import com.icbt.pahanaeduonlinebillingsystem.service.ServiceType;
-import com.icbt.pahanaeduonlinebillingsystem.service.services.CustomerService;
-import jakarta.servlet.ServletConfig;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
+import com.icbt.pahanaeduonlinebillingsystem.customer.service.impl.CustomerServiceImpl;
+import com.icbt.pahanaeduonlinebillingsystem.customer.service.CustomerService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -25,7 +23,7 @@ public class CustomerServlet extends HttpServlet {
 
     @Override
     public void init() {
-        customerService = ServiceFactory.getInstance().getService(ServiceType.CUSTOMER_SERVICE);
+        customerService = new CustomerServiceImpl();
     }
 
     @Override

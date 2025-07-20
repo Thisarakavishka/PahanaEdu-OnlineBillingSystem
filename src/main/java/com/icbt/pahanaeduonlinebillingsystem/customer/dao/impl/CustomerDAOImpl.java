@@ -1,8 +1,8 @@
-package com.icbt.pahanaeduonlinebillingsystem.dao.daos.impl;
+package com.icbt.pahanaeduonlinebillingsystem.customer.dao.impl;
 
-import com.icbt.pahanaeduonlinebillingsystem.dao.DAOUtil;
-import com.icbt.pahanaeduonlinebillingsystem.dao.daos.CustomerDAO;
-import com.icbt.pahanaeduonlinebillingsystem.entity.CustomerEntity;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
+import com.icbt.pahanaeduonlinebillingsystem.customer.dao.CustomerDAO;
+import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;

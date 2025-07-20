@@ -1,4 +1,6 @@
-package com.icbt.pahanaeduonlinebillingsystem.entity;
+package com.icbt.pahanaeduonlinebillingsystem.customer.dto;
+
+import com.icbt.pahanaeduonlinebillingsystem.common.base.SuperDTO;
 
 import java.sql.Timestamp;
 
@@ -7,7 +9,7 @@ import java.sql.Timestamp;
  * @date 2025-07-13
  * @since 1.0
  */
-public class CustomerEntity implements SuperEntity{
+public class CustomerDTO implements SuperDTO {
     private int id;
     private String accountNumber;
     private String name;
