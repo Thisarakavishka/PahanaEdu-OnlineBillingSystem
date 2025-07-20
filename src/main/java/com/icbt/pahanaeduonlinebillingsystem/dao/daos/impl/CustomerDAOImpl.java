@@ -1,5 +1,6 @@
 package com.icbt.pahanaeduonlinebillingsystem.dao.daos.impl;
 
+import com.icbt.pahanaeduonlinebillingsystem.dao.DAOUtil;
 import com.icbt.pahanaeduonlinebillingsystem.dao.daos.CustomerDAO;
 import com.icbt.pahanaeduonlinebillingsystem.entity.CustomerEntity;
 
@@ -17,7 +18,11 @@ public class CustomerDAOImpl implements CustomerDAO {
 
     @Override
     public boolean add(Connection connection, CustomerEntity entity) throws SQLException, ClassNotFoundException {
-        return false;
+        return DAOUtil.executeSql(
+                connection,
+                "INSERT INTO customers (account_number, name, address, phone, units_consumed, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+                entity.getAccountNumber(), entity.getName(), entity.getAddress(), entity.getPhone(), entity.getUnitsConsumed(), entity.getCreatedBy()
+        );
     }
 
     @Override

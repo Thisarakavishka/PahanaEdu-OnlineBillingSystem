@@ -1,8 +1,14 @@
 package com.icbt.pahanaeduonlinebillingsystem.service.services.impl;
 
+import com.icbt.pahanaeduonlinebillingsystem.dao.DAOFactory;
+import com.icbt.pahanaeduonlinebillingsystem.dao.DAOTypes;
+import com.icbt.pahanaeduonlinebillingsystem.dao.daos.CustomerDAO;
 import com.icbt.pahanaeduonlinebillingsystem.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.service.services.CustomerService;
+import com.icbt.pahanaeduonlinebillingsystem.util.DBUtil;
+import com.icbt.pahanaeduonlinebillingsystem.util.converter.CustomerConverter;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +20,13 @@ import java.util.Map;
  */
 public class CustomerServiceImpl implements CustomerService {
 
+    private final Connection connection = DBUtil.getConnection();
+    private final CustomerDAO customerDAO = DAOFactory.getInstance().getDAO(DAOTypes.CUSTOMER_DAO);
+
+
     @Override
     public boolean add(CustomerDTO dto) throws SQLException, ClassNotFoundException {
-        return false;
+        return customerDAO.add(connection, CustomerConverter.toEntity(dto));
     }
 
     @Override
