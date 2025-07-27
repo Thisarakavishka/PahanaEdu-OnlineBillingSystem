@@ -18,4 +18,6 @@ public interface CustomerDAO extends CrudDAO<CustomerEntity> {
     boolean existsByAccountNumber(Connection connection, Object... args) throws SQLException, ClassNotFoundException;
 
     boolean existsByPhoneNumber(Connection connection, Object... args) throws SQLException, ClassNotFoundException;
+
+    CustomerEntity searchByAccountNumber(Connection connection, Object... args) throws SQLException, ClassNotFoundException;
 }

@@ -68,8 +68,8 @@ public class CustomerServiceImpl implements CustomerService {
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
         }
 
-        boolean updateSuccess = customerDAO.update(connection, CustomerConverter.toEntity(dto));
-        if (!updateSuccess) {
+        boolean isUpdateSuccess = customerDAO.update(connection, CustomerConverter.toEntity(dto));
+        if (!isUpdateSuccess) {
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.INTERNAL_SERVER_ERROR);
         }
 
@@ -108,5 +108,17 @@ public class CustomerServiceImpl implements CustomerService {
         LOGGER.info("Fetching all customers...");
 
         return CustomerConverter.toDTOList(customerDAO.getAll(connection, searchParams));
+    }
+
+    @Override
+    public CustomerDTO searchByAccountNumber(Object... args) throws SQLException, ClassNotFoundException {
+        LOGGER.info("Searching customer by account number: " + args[0]);
+
+        CustomerDTO dto = CustomerConverter.toDto(customerDAO.searchByAccountNumber(connection, args[0]));
+        if (dto == null) {
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
+        }
+
+        return dto;
     }
 }

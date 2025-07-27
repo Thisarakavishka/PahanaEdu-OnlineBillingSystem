@@ -49,7 +49,7 @@ public class CustomerDAOImpl implements CustomerDAO {
     public CustomerEntity searchById(Connection connection, Object... args) throws SQLException, ClassNotFoundException {
         ResultSet rs = DAOUtil.executeSql(
                 connection,
-                "SELECT * FROM customers WHERE account_number = ? AND deleted_at IS NULL",
+                "SELECT * FROM customers WHERE id = ? AND deleted_at IS NULL",
                 args[0]
         );
         if (rs.next()) {
@@ -120,5 +120,31 @@ public class CustomerDAOImpl implements CustomerDAO {
                 args[0]
         );
         return rs.next();
+    }
+
+    @Override
+    public CustomerEntity searchByAccountNumber(Connection connection, Object... args) throws SQLException, ClassNotFoundException {
+        ResultSet rs = DAOUtil.executeSql(
+                connection,
+                "SELECT * FROM customers WHERE account_number = ? AND deleted_at IS NULL",
+                args[0]
+        );
+        if (rs.next()) {
+            CustomerEntity entity = new CustomerEntity();
+            entity.setId(rs.getInt("id"));
+            entity.setAccountNumber(rs.getString("account_number"));
+            entity.setName(rs.getString("name"));
+            entity.setAddress(rs.getString("address"));
+            entity.setPhone(rs.getString("phone"));
+            entity.setUnitsConsumed(rs.getInt("units_consumed"));
+            entity.setCreatedBy(rs.getInt("created_by"));
+            entity.setCreatedAt(rs.getTimestamp("created_at"));
+            entity.setUpdatedBy(rs.getInt("updated_by"));
+            entity.setUpdatedAt(rs.getTimestamp("updated_at"));
+            entity.setDeletedBy(rs.getInt("deleted_by"));
+            entity.setDeletedAt(rs.getTimestamp("deleted_at"));
+            return entity;
+        }
+        return null;
     }
 }
