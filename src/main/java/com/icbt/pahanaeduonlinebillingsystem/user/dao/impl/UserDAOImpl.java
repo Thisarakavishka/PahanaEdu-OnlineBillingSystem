@@ -39,4 +39,9 @@ public class UserDAOImpl implements UserDAO {
     public List<UserEntity> getAll(Connection connection, Map<String, String> searchParams) throws SQLException, ClassNotFoundException {
         return List.of();
     }
+
+    @Override
+    public UserEntity searchByUsername(Connection connection, String username) throws Exception {
+        return null;
+    }
 }
