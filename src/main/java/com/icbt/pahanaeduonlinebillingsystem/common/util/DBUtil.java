@@ -1,9 +1,10 @@
 package com.icbt.pahanaeduonlinebillingsystem.common.util;
 
+import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
+import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
+
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,21 +16,20 @@ import java.util.logging.Logger;
  */
 public class DBUtil {
 
+    private static final Logger LOGGER = Logger.getLogger(DBUtil.class.getName());
+
     private static final String USERNAME;
     private static final String PASSWORD;
     private static final String URL;
     private static final String DRIVER;
-    private static final Logger logger = Logger.getLogger(DBUtil.class.getName());
-
-    private DBUtil() {
-    }
 
     static {
+        Properties properties = new Properties();
         try (InputStream inputStream = DBUtil.class.getClassLoader().getResourceAsStream("db.properties")) {
-            Properties properties = new Properties();
             if (inputStream == null) {
-                logger.log(Level.SEVERE, "Failed to load properties file (Unable to find db.properties)");
-                throw new RuntimeException("Failed to load properties file (Unable to find db.properties)");
+                // Log and throw an exception if the properties file is missing.
+                LOGGER.log(Level.SEVERE, "Missing db.properties file in classpath");
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.CONFIGURATION_ERROR);
             }
             properties.load(inputStream);
             USERNAME = properties.getProperty("db.username");
@@ -37,33 +37,77 @@ public class DBUtil {
             URL = properties.getProperty("db.url");
             DRIVER = properties.getProperty("db.driver");
 
+            // Register the JDBC driver.
             Class.forName(DRIVER);
-            logger.log(Level.INFO, "Database connection established successfully");
+            LOGGER.log(Level.INFO, "JDBC driver '" + DRIVER + "' loaded successfully");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to load properties file (Unable to find db.properties)", e);
-            throw new RuntimeException("Failed to load properties file (Unable to find db.properties)");
+            LOGGER.log(Level.SEVERE, "Database initialization failed. Check db.properties or JDBC driver.", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.CONFIGURATION_ERROR);
         }
+    }
+
+    private DBUtil() {
     }
 
     public static Connection getConnection() {
         try {
             Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            logger.log(Level.FINE, "Database connection established successfully");
+            LOGGER.log(Level.FINE, "Database connection established to URL: " + URL + " successfully");
             return connection;
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to connect to database", e);
-            throw new RuntimeException("Failed to connect to database", e);
+            LOGGER.log(Level.SEVERE, "Failed to connect to database at URL: " + URL, e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         }
     }
+
 
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {
                 connection.close();
-                logger.log(Level.INFO, "Database connection closed successfully");
+                LOGGER.log(Level.INFO, "Database connection closed successfully");
             } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Failed to close database connection", e);
+                LOGGER.log(Level.SEVERE, "Failed to close database connection", e);
             }
+        }
+    }
+
+    public static void closeResultSet(ResultSet resultSet) {
+        if (resultSet != null) {
+            try {
+                resultSet.close();
+                LOGGER.log(Level.FINE, "ResultSet closed successfully");
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Failed to close ResultSet " + e.getMessage(), e);
+            }
+        }
+    }
+
+    public static void closeStatement(Statement statement) {
+        if (statement != null) {
+            try {
+                statement.close();
+                LOGGER.log(Level.FINE, "Statement closed successfully");
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Failed to close Statement " + e.getMessage(), e);
+            }
+        }
+    }
+
+    public static void rollbackConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                if (!connection.getAutoCommit()) {
+                    connection.rollback();
+                    LOGGER.log(Level.INFO, "Database transaction rolled back successfully");
+                } else {
+                    LOGGER.log(Level.FINE, "Skipping rollback: Connection is in auto-commit mode.");
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Critical: Failed to rollback database transaction. Data consistency might be affected.", e);
+            }
+        } else {
+            LOGGER.log(Level.FINE, "Skipping rollback: Provided connection is null.");
         }
     }
 }
