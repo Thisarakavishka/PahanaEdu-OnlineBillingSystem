@@ -4,6 +4,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.base.CrudDAO;
 import com.icbt.pahanaeduonlinebillingsystem.user.entity.UserEntity;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author Thisara Kavishka
@@ -12,6 +13,9 @@ import java.sql.Connection;
  */
 public interface UserDAO extends CrudDAO<UserEntity> {
 
-    UserEntity searchByUsername(Connection connection, String username) throws Exception;
+    UserEntity searchByUsername(Connection connection, String username) throws SQLException, ClassNotFoundException;
 
+    UserEntity authenticateUser(Connection connection, String username, String hashedPassword, String salt) throws SQLException, ClassNotFoundException;
+
+    int getUsersCount(Connection connection) throws SQLException, ClassNotFoundException;
 }
