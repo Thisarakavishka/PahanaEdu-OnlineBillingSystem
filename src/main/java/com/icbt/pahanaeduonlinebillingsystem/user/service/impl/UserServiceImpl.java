@@ -28,6 +28,7 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LogUtil.getLogger(UserServiceImpl.class);
     private final UserDAO userDAO;
+    private static final int INITIAL_ADMIN_ID = 1;
 
     public UserServiceImpl() {
         this.userDAO = new UserDAOImpl();
@@ -149,6 +150,12 @@ public class UserServiceImpl implements UserService {
         Integer userIdToDelete = (Integer) args[0];
         Integer deletedByUserId = (Integer) args[1];
 
+        // Stop deletion of the initial admin user
+        if (userIdToDelete.equals(INITIAL_ADMIN_ID)) {
+            LOGGER.log(Level.WARNING, "Attempt to delete initial admin user (ID: " + INITIAL_ADMIN_ID + ") by user ID: " + deletedByUserId + " was blocked.");
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.UNAUTHORIZED_ACCESS);
+        }
+
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
@@ -173,7 +180,7 @@ public class UserServiceImpl implements UserService {
             DBUtil.rollbackConnection(connection);
             LOGGER.log(Level.SEVERE, "Database error during user soft delete: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
-        }finally {
+        } finally {
             DBUtil.closeConnection(connection);
         }
     }
@@ -185,6 +192,9 @@ public class UserServiceImpl implements UserService {
             connection = DBUtil.getConnection();
             UserEntity userEntity = userDAO.searchById(connection, args);
             return UserConverter.toDto(userEntity);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during search userById: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
         }
@@ -197,6 +207,9 @@ public class UserServiceImpl implements UserService {
             connection = DBUtil.getConnection();
             List<UserEntity> userEntities = userDAO.getAll(connection, searchParams);
             return UserConverter.toDTOList(userEntities);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during getAll users: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
         }
