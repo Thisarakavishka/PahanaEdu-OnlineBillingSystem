@@ -20,12 +20,13 @@
         pageToLoad = "home"; // Default page
     }
 
-    // Basic security: Prevent directory traversal or loading arbitrary files
-    if (!pageToLoad.matches("[a-zA-Z0-9-]+")) { // Allow hyphen for page names like "make-bill"
+    // Basic security
+    if (!pageToLoad.matches("[a-zA-Z0-9-]+")) {
         pageToLoad = "home"; // Fallback if invalid characters are in page name
     }
 
     String role = (String) session.getAttribute("role");
+    Integer userId = (Integer) session.getAttribute("userId");
     request.setAttribute("dynamicPagePath", "pages/" + pageToLoad + ".jsp");
 %>
 <!DOCTYPE html>
@@ -48,7 +49,6 @@
 <body class="flex flex-col min-h-screen bg-gray-100 font-sans">
 
 <!-- Global function to extract context path for client-side JavaScript use -->
-<!-- IMPORTANT: Defined here at the top of the body to ensure it's available globally -->
 <script>
     function getContextPath() {
         const path = window.location.pathname;
@@ -60,23 +60,25 @@
     }
 </script>
 
-<!-- Overall layout container -->
+<!-- Overall layout -->
 <div class="flex flex-1">
     <!-- Sidebar -->
     <jsp:include page="sidebar.jsp"/>
 
-    <!-- Main content area -->
+    <!-- Main content -->
     <div class="flex-1 flex flex-col lg:ml-64">
-        <!-- Header for mobile and desktop -->
+        <!-- Header -->
         <jsp:include page="header.jsp"/>
 
         <!-- Hidden input to pass user role to JavaScript -->
         <input type="hidden" id="userRoleHiddenInput" value="<%= role %>">
+        <!-- Hidden input to pass user id to JavaScript -->
+        <input type="hidden" id="userIdHiddenInput" value="<%= userId %>">
         <!-- Hidden input to pass current page name to JavaScript -->
         <input type="hidden" id="currentPageHiddenInput" value="<%= pageToLoad %>">
 
 
-        <!-- Main content pages -->
+        <!-- Main content / pages -->
         <main class="flex-1 p-4 lg:p-6 overflow-auto">
             <jsp:include page="${dynamicPagePath}"/>
 
@@ -84,7 +86,6 @@
     </div>
 </div>
 
-<!-- Global Feather Icons replacement (can stay here) -->
 <script>
     feather.replace();
 </script>
