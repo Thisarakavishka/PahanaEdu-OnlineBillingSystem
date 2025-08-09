@@ -10,8 +10,7 @@
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <%
-    String role = (String) session.getAttribute("role"); // Use getSession() for clarity
-    // All roles can view items, but only admins can add/edit/delete
+    String role = (String) session.getAttribute("role");
 %>
 
 <div class="space-y-6">
@@ -62,11 +61,19 @@
                 <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Unit Price</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created At</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-center">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Unit
+                        Price
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Stock
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created
+                        At
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-center">
+                        Actions
+                    </th>
                 </tr>
                 </thead>
                 <tbody id="itemTableBody" class="bg-white divide-y divide-gray-200">
@@ -79,7 +86,7 @@
     </div>
 </div>
 
-<!-- Add/Edit Item Modal (HTML embedded directly in this JSP) -->
+<!-- Add & Edit Item Modal -->
 <div id="itemModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative">
@@ -107,7 +114,8 @@
                 <label for="stockQuantity" class="block text-sm font-semibold text-gray-700 mb-1">Stock Quantity</label>
                 <input type="number" id="stockQuantity" name="stockQuantity" min="0" required
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"/>
-                <p id="stockQuantityError" class="text-red-500 text-xs mt-1 hidden">Valid stock quantity is required.</p>
+                <p id="stockQuantityError" class="text-red-500 text-xs mt-1 hidden">Valid stock quantity is
+                    required.</p>
             </div>
 
             <div class="flex justify-end space-x-3 mt-6">
@@ -186,15 +194,18 @@
             <input type="hidden" id="restockItemCurrentStock" name="stockQuantity">
 
             <div>
-                <label for="restockItemNameDisplay" class="block text-sm font-semibold text-gray-700 mb-1">Item Name</label>
+                <label for="restockItemNameDisplay" class="block text-sm font-semibold text-gray-700 mb-1">Item
+                    Name</label>
                 <input type="text" id="restockItemNameDisplay" readonly
                        class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm"/>
             </div>
             <div>
-                <label for="quantityToAdd" class="block text-sm font-semibold text-gray-700 mb-1">Quantity to Add</label>
+                <label for="quantityToAdd" class="block text-sm font-semibold text-gray-700 mb-1">Quantity to
+                    Add</label>
                 <input type="number" id="quantityToAdd" name="quantityToAdd" min="1" value="1" required
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"/>
-                <p id="quantityToAddError" class="text-red-500 text-xs mt-1 hidden">Quantity must be a positive number.</p>
+                <p id="quantityToAddError" class="text-red-500 text-xs mt-1 hidden">Quantity must be a positive
+                    number.</p>
             </div>
 
             <div class="flex justify-end space-x-3 mt-6">
@@ -214,61 +225,28 @@
 
 <script>
     // Global variables for DOM elements (declared but not assigned immediately)
-    let itemTableBody;
-    let loadingIndicator;
-    let messageDisplay;
-    let messageText;
-    let searchInput;
-    let refreshBtn;
-    let itemModal;
-    let closeModalBtn;
-    let cancelFormBtn;
-    let itemForm;
-    let modalTitle;
-    let saveItemBtn;
+    let itemTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, itemModal, closeModalBtn,
+        cancelFormBtn, itemForm, modalTitle, saveItemBtn;
 
-    // Form fields (declared but not assigned immediately)
-    let itemIdField;
-    let nameField;
-    let unitPriceField;
-    let stockQuantityField;
+    // Form fields
+    let itemIdField, nameField, unitPriceField, stockQuantityField;
 
     // Error message elements
-    let nameError;
-    let unitPriceError;
-    let stockQuantityError;
+    let nameError, unitPriceError, stockQuantityError;
 
     // View Modal elements
-    let itemViewModal;
-    let closeItemViewModalBtn;
-    let viewItemId;
-    let viewItemName;
-    let viewItemUnitPrice;
-    let viewItemStockQuantity;
-    let viewItemCreatedBy;
-    let viewItemCreatedAt;
-    let viewItemUpdatedBy;
-    let viewItemUpdatedAt;
+    let itemViewModal, closeItemViewModalBtn, viewItemId, viewItemName, viewItemUnitPrice, viewItemStockQuantity,
+        viewItemCreatedBy, viewItemCreatedAt, viewItemUpdatedBy, viewItemUpdatedAt;
 
     // Restock Modal elements
-    let restockModal;
-    let closeRestockModalBtn;
-    let cancelRestockFormBtn;
-    let restockForm;
-    let restockItemId;
-    let restockItemName; // Hidden field
-    let restockItemNameDisplay; // Display field
-    let restockItemUnitPrice; // Hidden field
-    let restockItemCurrentStock; // Hidden field
-    let quantityToAddField;
-    let quantityToAddError;
-    let saveRestockBtn;
-
+    let restockModal, closeRestockModalBtn, cancelRestockFormBtn, restockForm, restockItemId, restockItemName,
+        restockItemNameDisplay, restockItemUnitPrice, restockItemCurrentStock, quantityToAddField, quantityToAddError,
+        saveRestockBtn;
 
     // Get user role and ID from hidden inputs in dashboard.jsp
     const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
-    const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
+    const INITIAL_ADMIN_ID = 1;
 
     // Function to display messages (success/error)
     function showMessage(message, type = 'success') {
@@ -333,12 +311,20 @@
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">';
             rowHtml += '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' + (item.stockQuantity < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800') + '">' + item.stockQuantity + ' units</span>';
             rowHtml += '</td>';
-            rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-') + '</td>'; // Format date
+            rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' +
+                (item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    })
+                    : '-') +
+                '</td>';
 
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">';
 
             // --- VIEW BUTTON (All roles can view) ---
-            rowHtml += '<button title="View" class="text-blue-600 hover:text-blue-900 mr-3 view-btn" data-item-id="' + item.id + '">' +
+            rowHtml += '<button title="View Item Details" class="text-blue-600 hover:text-blue-900 mr-3 view-btn" data-item-id="' + item.id + '">' +
                 '<i data-feather="eye" class="w-4 h-4 inline-block align-middle"></i></button>';
 
             // --- EDIT BUTTON LOGIC (Only Admins can edit) ---
@@ -348,7 +334,7 @@
             }
 
             if (canEdit) {
-                rowHtml += '<button title="Edit" class="text-gray-600 hover:text-gray-900 mr-3 edit-btn" data-item-id="' + item.id + '">' +
+                rowHtml += '<button title="Edit Item" class="text-gray-600 hover:text-gray-900 mr-3 edit-btn" data-item-id="' + item.id + '">' +
                     '<i data-feather="edit" class="w-4 h-4 inline-block align-middle"></i></button>';
             } else {
                 // If not allowed to edit, show 'No Edit' or nothing, depending on preference
@@ -363,7 +349,7 @@
             }
 
             if (canRestock) {
-                rowHtml += '<button title="Restock" class="text-purple-600 hover:text-purple-900 mr-3 restock-btn" data-item-id="' + item.id + '">' +
+                rowHtml += '<button title="Restock Item" class="text-purple-600 hover:text-purple-900 mr-3 restock-btn" data-item-id="' + item.id + '">' +
                     '<i data-feather="truck" class="w-4 h-4 inline-block align-middle"></i></button>';
             }
             // --- END RESTOCK BUTTON LOGIC ---
@@ -375,11 +361,10 @@
             }
 
             if (canDelete) {
-                rowHtml += '<button title="Delete" class="text-red-600 hover:text-red-900 delete-btn" data-item-id="' + item.id + '">' +
+                rowHtml += '<button title="Delete Item" class="text-red-600 hover:text-red-900 delete-btn" data-item-id="' + item.id + '">' +
                     '<i data-feather="trash-2" class="w-4 h-4 inline-block align-middle"></i></button>';
             } else if (loggedInUserRole === 'ADMIN') { // For other admins, explicitly show 'No Delete'
-                // For admins, they just won't see the button.
-              //  rowHtml += '<span class="text-gray-400 ml-3">No Delete</span>';
+                // rowHtml += '<span class="text-gray-400 ml-3">No Delete</span>'; // Removed this to just hide the button
             }
             // For 'USER' role, no delete button or text is added by default.
             // --- END DELETE BUTTON LOGIC ---
@@ -433,7 +418,7 @@
     }
 
     // Function to validate restock form
-    function validateRestockForm() { // Moved to be defined earlier
+    function validateRestockForm() {
         if (quantityToAddError) quantityToAddError.classList.add('hidden');
         let isValid = true;
         const quantity = parseInt(quantityToAddField.value);
@@ -462,16 +447,17 @@
         clearValidationErrors(); // Clear errors when closing
         console.log('Item modal closed.');
     }
+
     function closeItemViewModal() {
         itemViewModal.classList.add('hidden');
         console.log('Item View modal closed.');
     }
+
     function closeRestockModal() {
         restockModal.classList.add('hidden');
         clearValidationErrors(); // Clear errors when closing
         console.log('Restock modal closed.');
     }
-
 
     // Open View Item Modal
     async function openViewModal(itemId) {
@@ -488,10 +474,27 @@
             viewItemName.textContent = data.name;
             viewItemUnitPrice.textContent = 'Rs. ' + parseFloat(data.unitPrice).toFixed(2);
             viewItemStockQuantity.textContent = data.stockQuantity + ' units';
+            // Display usernames, which are now provided by the servlet
             viewItemCreatedBy.textContent = data.createdBy || '-';
-            viewItemCreatedAt.textContent = data.createdAt ? new Date(data.createdAt).toLocaleString() : '-';
+            viewItemCreatedAt.textContent = data.createdAt
+                ? new Date(data.createdAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ' - ' + new Date(data.createdAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-';
             viewItemUpdatedBy.textContent = data.updatedBy || '-';
-            viewItemUpdatedAt.textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '-';
+            viewItemUpdatedAt.textContent = data.createdAt
+                ? new Date(data.updatedAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ' - ' + new Date(data.updatedAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-';
 
             itemViewModal.classList.remove('hidden');
             console.log('View Item modal should be visible with data:', data);
@@ -621,7 +624,7 @@
         const formData = new URLSearchParams();
         formData.append('action', 'restock'); // Custom action for restock
         formData.append('id', restockItemId.value);
-        // FIX: Send quantityToAdd, not newStockQuantity
+        // We only need to send the ID and the quantity to add for restock
         formData.append('quantityToAdd', quantityToAddField.value); // Send the actual quantity to add
 
         try {
@@ -677,11 +680,12 @@
 
     // Search functionality with debounce
     let searchTimeout;
+
     function handleSearchInput() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             fetchItems(searchInput.value);
-        }, 900); // Debounce for 300ms
+        }, 300); // Debounce for 300ms
     }
 
     // --- Initialization Function ---

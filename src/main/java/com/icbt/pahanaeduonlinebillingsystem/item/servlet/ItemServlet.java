@@ -1,11 +1,15 @@
 package com.icbt.pahanaeduonlinebillingsystem.item.servlet;
 
+import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
 import com.icbt.pahanaeduonlinebillingsystem.item.dto.ItemDTO;
 import com.icbt.pahanaeduonlinebillingsystem.item.service.ItemService;
 import com.icbt.pahanaeduonlinebillingsystem.item.service.impl.ItemServiceImpl;
+import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
+import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
+import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -35,12 +39,14 @@ import java.util.stream.Collectors;
 public class ItemServlet extends HttpServlet {
 
     private ItemService itemService;
+    private UserService userService;
     private static final Logger LOGGER = LogUtil.getLogger(ItemServlet.class);
-    private static final int INITIAL_ADMIN_ID = 1; // Assuming initial admin ID
+    private static final int INITIAL_ADMIN_ID = 1;
 
     @Override
     public void init() {
         itemService = new ItemServiceImpl();
+        userService = new UserServiceImpl();
     }
 
     // Helper to get userId from session
@@ -62,18 +68,19 @@ public class ItemServlet extends HttpServlet {
     }
 
     // Helper to convert ItemDTO to a Map for JSON serialization
-    private Map<String, Object> itemDtoToMap(ItemDTO dto) {
+    // Now accepts optional username parameters
+    private Map<String, Object> itemDtoToMap(ItemDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
         if (dto == null) return null;
         Map<String, Object> map = new HashMap<>();
         map.put("id", dto.getId());
         map.put("name", dto.getName());
         map.put("unitPrice", dto.getUnitPrice());
         map.put("stockQuantity", dto.getStockQuantity());
-        map.put("createdBy", dto.getCreatedBy());
+        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
         map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", dto.getUpdatedBy());
+        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
         map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", dto.getDeletedBy());
+        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
         map.put("deletedAt", dto.getDeletedAt());
         return map;
     }
@@ -136,7 +143,8 @@ public class ItemServlet extends HttpServlet {
             boolean isAdded = itemService.add(dto);
             if (isAdded) {
                 ItemDTO addedItem = itemService.searchByName(dto.getName());
-                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Item added successfully", "item", itemDtoToMap(addedItem)));
+                // For add, we might not need full user details for response, just confirm
+                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Item added successfully", "item", itemDtoToMap(addedItem, null, null, null)));
             } else {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item addition failed unexpectedly."));
             }
@@ -180,10 +188,46 @@ public class ItemServlet extends HttpServlet {
             if (idStr != null && !idStr.trim().isEmpty()) {
                 Integer itemId = Integer.parseInt(idStr);
                 ItemDTO dto = itemService.searchById(itemId);
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto));
+
+                // Fetch usernames for audit fields
+                String createdByUsername = null;
+                String updatedByUsername = null;
+                String deletedByUsername = null;
+
+                if (dto.getCreatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getCreatedBy());
+                    if (user != null) createdByUsername = user.getUsername();
+                }
+                if (dto.getUpdatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getUpdatedBy());
+                    if (user != null) updatedByUsername = user.getUsername();
+                }
+                if (dto.getDeletedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getDeletedBy());
+                    if (user != null) deletedByUsername = user.getUsername();
+                }
+
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
             } else if (name != null && !name.trim().isEmpty()) {
                 ItemDTO dto = itemService.searchByName(name);
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto));
+                // For search by name (single item), also enrich with usernames
+                String createdByUsername = null;
+                String updatedByUsername = null;
+                String deletedByUsername = null;
+
+                if (dto.getCreatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getCreatedBy());
+                    if (user != null) createdByUsername = user.getUsername();
+                }
+                if (dto.getUpdatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getUpdatedBy());
+                    if (user != null) updatedByUsername = user.getUsername();
+                }
+                if (dto.getDeletedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getDeletedBy());
+                    if (user != null) deletedByUsername = user.getUsername();
+                }
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
             }
             else {
                 Map<String, String> searchParams = new HashMap<>();
@@ -192,8 +236,9 @@ public class ItemServlet extends HttpServlet {
                     searchParams.put("search", searchTerm);
                 }
                 List<ItemDTO> list = itemService.getAll(searchParams);
+                // For list of items, send simplified map without full user details to avoid large payload
                 List<Map<String, Object>> itemMaps = list.stream()
-                        .map(this::itemDtoToMap)
+                        .map(item -> itemDtoToMap(item, null, null, null)) // Pass null for usernames in list view
                         .collect(Collectors.toList());
                 SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemMaps);
             }
@@ -240,7 +285,7 @@ public class ItemServlet extends HttpServlet {
 
         try {
             Map<String, String> requestBodyParams = parseUrlEncodedBody(req);
-            String action = requestBodyParams.get("action"); // FIX: Get action from parsed body
+            String action = requestBodyParams.get("action"); // Get action from parsed body
 
             ItemDTO dto = new ItemDTO();
             String idStr = requestBodyParams.get("id");
@@ -263,7 +308,7 @@ public class ItemServlet extends HttpServlet {
                 boolean isRestocked = itemService.restockItem(dto.getId(), quantityToAdd, currentUserId);
                 if (isRestocked) {
                     ItemDTO restockedItem = itemService.searchById(dto.getId());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item restocked successfully", "item", itemDtoToMap(restockedItem)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item restocked successfully", "item", itemDtoToMap(restockedItem, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item restock failed unexpectedly."));
                 }
@@ -288,7 +333,7 @@ public class ItemServlet extends HttpServlet {
                 boolean isUpdated = itemService.update(dto);
                 if (isUpdated) {
                     ItemDTO updatedItem = itemService.searchById(dto.getId()); // Fetch by ID after update
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item updated successfully", "item", itemDtoToMap(updatedItem)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item updated successfully", "item", itemDtoToMap(updatedItem, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item update failed unexpectedly."));
                 }
