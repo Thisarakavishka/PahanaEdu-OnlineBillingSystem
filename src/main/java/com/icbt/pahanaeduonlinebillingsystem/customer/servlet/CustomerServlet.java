@@ -6,6 +6,9 @@ import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
 import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.service.CustomerService;
 import com.icbt.pahanaeduonlinebillingsystem.customer.service.impl.CustomerServiceImpl;
+import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
+import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
+import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -34,11 +37,14 @@ import java.util.stream.Collectors;
 public class CustomerServlet extends HttpServlet {
 
     private CustomerService customerService;
+    private UserService userService;
     private static final Logger LOGGER = LogUtil.getLogger(CustomerServlet.class);
+    private static final int INITIAL_ADMIN_ID = 1;
 
     @Override
     public void init() {
         customerService = new CustomerServiceImpl();
+        userService = new UserServiceImpl();
     }
 
     // Helper to get userId from session
@@ -50,8 +56,18 @@ public class CustomerServlet extends HttpServlet {
         return null;
     }
 
+    // Helper to get user role from session
+    private String getUserRoleFromSession(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("role") != null) {
+            return (String) session.getAttribute("role");
+        }
+        return null;
+    }
+
     // Helper to convert CustomerDTO to a Map for JSON serialization
-    private Map<String, Object> customerDtoToMap(CustomerDTO dto) {
+    // Now accepts optional username parameters for audit fields
+    private Map<String, Object> customerDtoToMap(CustomerDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
         if (dto == null) return null;
         Map<String, Object> map = new HashMap<>();
         map.put("id", dto.getId());
@@ -60,11 +76,11 @@ public class CustomerServlet extends HttpServlet {
         map.put("address", dto.getAddress());
         map.put("phone", dto.getPhone());
         map.put("unitsConsumed", dto.getUnitsConsumed());
-        map.put("createdBy", dto.getCreatedBy());
+        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
         map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", dto.getUpdatedBy());
+        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
         map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", dto.getDeletedBy());
+        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
         map.put("deletedAt", dto.getDeletedAt());
         return map;
     }
@@ -95,13 +111,18 @@ public class CustomerServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Integer currentUserId = getUserIdFromSession(req);
+        String currentUserRole = getUserRoleFromSession(req);
+
+        if (!"ADMIN".equals(currentUserRole)) { // Only admins can add customers
+            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only admins can add customers."));
+            return;
+        }
         if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
             return;
         }
 
         try {
-            // Read parameters from form data (application/x-www-form-urlencoded)
             CustomerDTO dto = new CustomerDTO();
             dto.setAccountNumber(req.getParameter("accountNumber"));
             dto.setName(req.getParameter("name"));
@@ -118,14 +139,12 @@ public class CustomerServlet extends HttpServlet {
                 return;
             }
 
-            // Set createdBy from session
             dto.setCreatedBy(currentUserId);
 
             boolean isAdded = customerService.add(dto);
             if (isAdded) {
-                // Fetch the newly added customer to get its ID and audit timestamps
                 CustomerDTO addedCustomer = customerService.searchByAccountNumber(dto.getAccountNumber());
-                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Customer added successfully", "customer", customerDtoToMap(addedCustomer)));
+                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Customer added successfully", "customer", customerDtoToMap(addedCustomer, null, null, null)));
             } else {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Customer addition failed unexpectedly."));
             }
@@ -170,20 +189,43 @@ public class CustomerServlet extends HttpServlet {
 
             if (accountNumber != null && !accountNumber.trim().isEmpty()) {
                 CustomerDTO dto = customerService.searchByAccountNumber(accountNumber);
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, customerDtoToMap(dto));
+
+                // Fetch usernames for audit fields for single view
+                String createdByUsername = null;
+                String updatedByUsername = null;
+                String deletedByUsername = null;
+
+                if (dto.getCreatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getCreatedBy());
+                    if (user != null) createdByUsername = user.getUsername();
+                }
+                if (dto.getUpdatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getUpdatedBy());
+                    if (user != null) updatedByUsername = user.getUsername();
+                }
+                if (dto.getDeletedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getDeletedBy());
+                    if (user != null) deletedByUsername = user.getUsername();
+                }
+
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, customerDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
             } else {
-                // FIX: If 'search' parameter is present, use it directly
                 String searchTerm = req.getParameter("search");
                 if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-                    searchParams.put("search", searchTerm); // Put into map with key "search"
+                    searchParams.put("search", searchTerm);
                 }
 
                 List<CustomerDTO> list = customerService.getAll(searchParams);
+                // For list of customers, send simplified map without full user details to avoid large payload
+                // If you need usernames in the main table, you'd fetch them here too, but it adds overhead.
                 List<Map<String, Object>> customerMaps = list.stream()
-                        .map(this::customerDtoToMap)
+                        .map(item -> customerDtoToMap(item, null, null, null)) // Pass null for usernames in list view
                         .collect(Collectors.toList());
                 SendResponse.sendJson(resp, HttpServletResponse.SC_OK, customerMaps);
             }
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid ID format for GET /customers: " + e.getMessage());
+            SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid customer ID format."));
         } catch (PahanaEduOnlineBillingSystemException e) {
             LOGGER.log(Level.WARNING, "Business error during GET /customers: " + e.getExceptionType().name() + " - " + e.getMessage());
             String errorMessage;
@@ -210,22 +252,24 @@ public class CustomerServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String currentUserRole = getUserRoleFromSession(req);
         Integer currentUserId = getUserIdFromSession(req);
+
+        if (!"ADMIN".equals(currentUserRole)) { // Only admins can update customers
+            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only admins can update customers."));
+            return;
+        }
         if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
             return;
         }
 
         try {
-            // Manually parse the request body for URL-encoded parameters
             Map<String, String> requestBodyParams = parseUrlEncodedBody(req);
 
             CustomerDTO dto = new CustomerDTO();
 
-            // Retrieve parameters from the parsed body map
             String idStr = requestBodyParams.get("id");
-            LOGGER.log(Level.INFO, "Received ID for update (from parsed body): " + idStr); // Added log
-
             if (idStr != null && !idStr.isEmpty()) {
                 dto.setId(Integer.parseInt(idStr));
             } else {
@@ -240,20 +284,18 @@ public class CustomerServlet extends HttpServlet {
             String unitsConsumedStr = requestBodyParams.get("unitsConsumed");
             dto.setUnitsConsumed(unitsConsumedStr != null && !unitsConsumedStr.isEmpty() ? Integer.parseInt(unitsConsumedStr) : 0);
 
-            // Basic validation
             if (dto.getAccountNumber() == null || dto.getAccountNumber().trim().isEmpty() ||
                     dto.getName() == null || dto.getName().trim().isEmpty() ||
                     dto.getPhone() == null || dto.getPhone().trim().isEmpty()) {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Missing required customer fields for update."));
                 return;
             }
-            // Set updatedBy from session
             dto.setUpdatedBy(currentUserId);
 
             boolean isUpdated = customerService.update(dto);
             if (isUpdated) {
                 CustomerDTO updatedCustomer = customerService.searchByAccountNumber(dto.getAccountNumber());
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Customer updated successfully", "customer", customerDtoToMap(updatedCustomer)));
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Customer updated successfully", "customer", customerDtoToMap(updatedCustomer, null, null, null)));
             } else {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Customer update failed unexpectedly."));
             }
@@ -293,7 +335,14 @@ public class CustomerServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String currentUserRole = getUserRoleFromSession(req);
         Integer currentUserId = getUserIdFromSession(req);
+
+        // Only Initial Admin (ID = 1) can delete customers
+        if (!"ADMIN".equals(currentUserRole) || (currentUserId != null && currentUserId != INITIAL_ADMIN_ID)) {
+            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only the Initial Admin can delete customers."));
+            return;
+        }
         if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
             return;

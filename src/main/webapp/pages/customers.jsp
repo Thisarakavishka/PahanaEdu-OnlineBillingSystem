@@ -73,10 +73,10 @@
                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Telephone
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Units
+                    <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Units
                         Consumed
                     </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-center">
                         Actions
                     </th>
                 </tr>
@@ -149,39 +149,96 @@
     </div>
 </div>
 
+<!-- View Customer Modal -->
+<div id="customerViewModal"
+     class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
+
+        <!-- Close Button -->
+        <button id="closeCustomerViewModalBtn"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+            <i data-feather="x" class="w-6 h-6"></i>
+        </button>
+
+        <!-- Title -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Customer Details</h2>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer ID</label>
+                <p id="viewCustomerId" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Account Number</label>
+                <p id="viewCustomerAccountNumber"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer Name</label>
+                <p id="viewCustomerName" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Address</label>
+                <p id="viewCustomerAddress"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
+                <p id="viewCustomerPhone" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Units Consumed</label>
+                <p id="viewCustomerUnitsConsumed"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Created By</label>
+                <p id="viewCustomerCreatedBy"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Created At</label>
+                <p id="viewCustomerCreatedAt"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated By</label>
+                <p id="viewCustomerUpdatedBy"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated At</label>
+                <p id="viewCustomerUpdatedAt"
+                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <%-- All JavaScript template literals (backticks ` and ${}) MUST be escaped with a backslash (\) to prevent JSP parsing errors. --%>
 <script>
     // Global variables for DOM elements (declared but not assigned immediately)
-    let customerTableBody;
-    let loadingIndicator;
-    let messageDisplay;
-    let messageText;
-    let searchInput;
-    let refreshBtn;
-    let customerModal;
-    let closeModalBtn;
-    let cancelFormBtn;
-    let customerForm;
-    let modalTitle;
-    let saveCustomerBtn;
+    let customerTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, customerModal,
+        closeModalBtn, cancelFormBtn, customerForm, modalTitle, saveCustomerBtn;
 
-    // Form fields (declared but not assigned immediately)
-    let customerIdField;
-    let accountNumberField;
-    let nameField;
-    let addressField;
-    let phoneField;
-    let unitsConsumedField;
+    // Form fields (declared but not not assigned immediately)
+    let customerIdField, accountNumberField, nameField, addressField, phoneField, unitsConsumedField;
 
     // Error message elements
-    let accountNumberError;
-    let nameError;
-    let addressError;
-    let phoneError;
-    let unitsConsumedError;
+    let accountNumberError, nameError, addressError, phoneError, unitsConsumedError;
 
-    // Get user role from a hidden input in dashboard.jsp ,This value is passed from the server-side JSP and is available globally.
-    let userRole = document.getElementById('userRoleHiddenInput').value;
+    // View Modal elements
+    let customerViewModal, closeCustomerViewModalBtn, viewCustomerId, viewCustomerAccountNumber, viewCustomerName,
+        viewCustomerAddress, viewCustomerPhone, viewCustomerUnitsConsumed, viewCustomerCreatedBy, viewCustomerCreatedAt,
+        viewCustomerUpdatedBy, viewCustomerUpdatedAt;
+
+    // Get user role and ID from hidden inputs in dashboard.jsp
+    // FIX: Initialize userRole and loggedInUserId directly from hidden inputs
+    const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
+    const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
+    const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
 
     // Function to display messages (success or error), Hide after 5 seconds
     function showMessage(message, type = 'success') {
@@ -246,26 +303,48 @@
             rowHtml += '</td>';
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">' + customer.name + '</td>';
 
-            if (userRole === 'ADMIN') {
+            if (loggedInUserRole === 'ADMIN') { // Use loggedInUserRole for consistency
                 rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate max-w-xs">' + (customer.address || '-') + '</td>';
             }
 
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + customer.phone + '</td>';
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">';
-            rowHtml += '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">' + customer.unitsConsumed + ' units</span>';
+            rowHtml += '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ' + (customer.unitsConsumed < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800') + '">' + customer.unitsConsumed + ' units</span>';
             rowHtml += '</td>';
 
             rowHtml += '<td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">';
 
-            if (userRole === 'ADMIN') {
-                rowHtml += '<button class="text-gray-600 hover:text-gray-900 mr-3 edit-btn" data-account-number="' + customer.accountNumber + '">' +
-                    '<i data-feather="edit" class="w-4 h-4 inline-block align-middle"></i> Edit</button>';
-                rowHtml += '<button class="text-red-600 hover:text-red-900 delete-btn" data-account-number="' + customer.accountNumber + '">' +
-                    '<i data-feather="trash-2" class="w-4 h-4 inline-block align-middle"></i> Delete</button>';
-            } else {
-                rowHtml += '<button class="text-green-600 hover:text-green-900 view-bill-btn" data-account-number="' + customer.accountNumber + '">' +
-                    '<i data-feather="file-text" class="w-4 h-4 inline-block align-middle"></i> View Bill</button>';
+            // --- VIEW BUTTON (All roles can view) ---
+            rowHtml += '<button title="View Customer Details" class="text-blue-600 hover:text-blue-900 mr-3 view-btn" data-account-number="' + customer.accountNumber + '">' +
+                '<i data-feather="eye" class="w-4 h-4 inline-block align-middle"></i></button>';
+
+            // --- EDIT BUTTON LOGIC ---
+            let canEdit = false;
+            // Admins can edit all customers
+            if (loggedInUserRole === 'ADMIN') {
+                canEdit = true;
             }
+            // Users can only view, no edit button for them.
+
+            if (canEdit) {
+                rowHtml += '<button title="Edit Customer" class="text-gray-600 hover:text-gray-900 mr-3 edit-btn" data-account-number="' + customer.accountNumber + '">' +
+                    '<i data-feather="edit" class="w-4 h-4 inline-block align-middle"></i></button>';
+            }
+            // --- END EDIT BUTTON LOGIC ---
+
+            // --- DELETE BUTTON LOGIC ---
+            let canDelete = false;
+            // Only Initial Admin (ID 1) can delete customers
+            if (loggedInUserRole === 'ADMIN' && loggedInUserId === INITIAL_ADMIN_ID) {
+                canDelete = true;
+            }
+
+            if (canDelete) {
+                rowHtml += '<button title="Delete Customer" class="text-red-600 hover:text-red-900 delete-btn" data-account-number="' + customer.accountNumber + '">' +
+                    '<i data-feather="trash-2" class="w-4 h-4 inline-block align-middle"></i></button>';
+            }
+            // If not allowed to delete, no button is added.
+            // --- END DELETE BUTTON LOGIC ---
 
             rowHtml += '</td>';
             row.innerHTML = rowHtml;
@@ -294,7 +373,7 @@
             accountNumberError.textContent = 'Account number is required.';
             accountNumberError.classList.remove('hidden');
             isValid = false;
-        } else if (!/^\d{8}$/.test(accountNumberField.value.trim())) { // Assuming 6 digits for auto-generated
+        } else if (!/^\d{8}$/.test(accountNumberField.value.trim())) { // Assuming 8 digits for auto-generated
             accountNumberError.textContent = 'Account number must be 8 digits.';
             accountNumberError.classList.remove('hidden');
             isValid = false;
@@ -307,8 +386,9 @@
             isValid = false;
         }
 
-        // Address Validation (assuming it's required for ADMIN)
-        if (userRole === 'ADMIN' && addressField.value.trim() === '') {
+        // Address Validation (required for ADMIN)
+        // Check if the current user is ADMIN and if the address field is empty
+        if (loggedInUserRole === 'ADMIN' && addressField.value.trim() === '') {
             addressError.textContent = 'Address is required for admin users.';
             addressError.classList.remove('hidden');
             isValid = false;
@@ -351,7 +431,7 @@
         console.log('Add Customer modal should be visible.');
     }
 
-    // Generate a simple 6-digit account number (e.g., YYMMDD or random)
+    // Generate a simple 8-digit account number (YYMMDDXX)
     function generateAccountNumber() {
         const now = new Date();
         const year = String(now.getFullYear()).slice(-2);
@@ -362,11 +442,63 @@
         return year + month + day + random; // Example: 25080542
     }
 
-    // Close Modal
+    // Close Modals
     function closeCustomerModal() {
         customerModal.classList.add('hidden');
         clearValidationErrors(); // Clear errors when closing
         console.log('Customer modal closed.');
+    }
+
+    function closeCustomerViewModal() {
+        customerViewModal.classList.add('hidden');
+        console.log('Customer View modal closed.');
+    }
+
+    // Open View Customer Modal
+    async function openViewModal(accountNumber) {
+        console.log('Attempting to open View Customer modal for Account Number:', accountNumber);
+        try {
+            const response = await fetch(getContextPath() + '/customers?accountNumber=' + encodeURIComponent(accountNumber));
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch customer details for viewing.');
+            }
+
+            viewCustomerId.textContent = data.id;
+            viewCustomerAccountNumber.textContent = data.accountNumber;
+            viewCustomerName.textContent = data.name;
+            viewCustomerAddress.textContent = data.address || '-';
+            viewCustomerPhone.textContent = data.phone;
+            viewCustomerUnitsConsumed.textContent = data.unitsConsumed + ' units';
+            // Display usernames, which are now provided by the servlet
+            viewCustomerCreatedBy.textContent = data.createdBy || '-';
+            viewCustomerCreatedAt.textContent = data.createdAt
+                ? new Date(data.createdAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ' - ' + new Date(data.createdAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-';
+            viewCustomerUpdatedBy.textContent = data.updatedBy || '-';
+            viewCustomerUpdatedAt.textContent = data.updatedAt
+                ? new Date(data.updatedAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ' - ' + new Date(data.updatedAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '-';
+
+            customerViewModal.classList.remove('hidden');
+            console.log('View Customer modal should be visible with data:', data);
+        } catch (error) {
+            console.error('Error opening view modal:', error);
+            showMessage(error.message || 'Failed to load customer details for viewing.', 'error');
+        }
     }
 
     // Open Edit Customer Modal
@@ -481,7 +613,7 @@
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             fetchCustomers(searchInput.value);
-        }, 900); // Debounce for 300ms
+        }, 900); // Debounce for 900ms
     }
 
     // --- Initialization Function ---
@@ -517,61 +649,60 @@
         phoneError = document.getElementById('phoneError');
         unitsConsumedError = document.getElementById('unitsConsumedError');
 
+        // View Modal elements
+        customerViewModal = document.getElementById('customerViewModal');
+        closeCustomerViewModalBtn = document.getElementById('closeCustomerViewModalBtn');
+        viewCustomerId = document.getElementById('viewCustomerId');
+        viewCustomerAccountNumber = document.getElementById('viewCustomerAccountNumber');
+        viewCustomerName = document.getElementById('viewCustomerName');
+        viewCustomerAddress = document.getElementById('viewCustomerAddress');
+        viewCustomerPhone = document.getElementById('viewCustomerPhone');
+        viewCustomerUnitsConsumed = document.getElementById('viewCustomerUnitsConsumed');
+        viewCustomerCreatedBy = document.getElementById('viewCustomerCreatedBy');
+        viewCustomerCreatedAt = document.getElementById('viewCustomerCreatedAt');
+        viewCustomerUpdatedBy = document.getElementById('viewCustomerUpdatedBy');
+        viewCustomerUpdatedAt = document.getElementById('viewCustomerUpdatedAt');
 
-        // Get user role from the hidden input
-        const userRoleHiddenInput = document.getElementById('userRoleHiddenInput');
-        if (userRoleHiddenInput) {
-            userRole = userRoleHiddenInput.value;
-            console.log('User role detected:', userRole);
-        } else {
-            console.warn("Hidden input 'userRoleHiddenInput' not found. User role might not be correctly set.");
-            userRole = 'GUEST'; // Default or fallback
-        }
 
-        // --- Event Delegation for Add Customer Button ---
-        // Attach listener to a parent element (e.g., document.body or a specific container)
+        // --- Event Delegation ---
         document.body.addEventListener('click', (event) => {
-            // Check for the "Add New Customer" button
+            // Add New Customer button
             if (event.target && (event.target.id === 'addCustomerBtn' || event.target.closest('#addCustomerBtn'))) {
                 console.log('Add Customer button clicked via delegation!');
                 openAddModal();
             }
-            // Handle edit/delete/view-bill buttons via delegation
+            // View customer button
+            if (event.target && event.target.classList.contains('view-btn')) {
+                console.log('View button clicked via delegation!');
+                openViewModal(event.target.dataset.accountNumber);
+            } else if (event.target && event.target.closest('.view-btn')) {
+                console.log('View icon clicked via delegation!');
+                openViewModal(event.target.closest('.view-btn').dataset.accountNumber);
+            }
+            // Edit customer button
             if (event.target && event.target.classList.contains('edit-btn')) {
                 console.log('Edit button clicked via delegation!');
                 openEditModal(event.target.dataset.accountNumber);
-            } else if (event.target && event.target.closest('.edit-btn')) { // For icon clicks inside button
+            } else if (event.target && event.target.closest('.edit-btn')) {
                 console.log('Edit icon clicked via delegation!');
                 openEditModal(event.target.closest('.edit-btn').dataset.accountNumber);
             }
-
+            // Delete customer button
             if (event.target && event.target.classList.contains('delete-btn')) {
                 console.log('Delete button clicked via delegation!');
                 deleteCustomer(event.target.dataset.accountNumber);
-            } else if (event.target && event.target.closest('.delete-btn')) { // For icon clicks inside button
+            } else if (event.target && event.target.closest('.delete-btn')) {
                 console.log('Delete icon clicked via delegation!');
                 deleteCustomer(event.target.closest('.delete-btn').dataset.accountNumber);
-            }
-
-            if (event.target && event.target.classList.contains('view-bill-btn')) {
-                console.log('View Bill button clicked via delegation!');
-                const accountNumber = event.target.dataset.accountNumber;
-                // window.location.href = getContextPath() + '/dashboard.jsp?page=bill&accountNumber=' + accountNumber; // Use string concatenation
-                showMessage('Viewing bill for ' + accountNumber, 'info'); // Use string concatenation
-            } else if (event.target && event.target.closest('.view-bill-btn')) { // For icon clicks inside button
-                console.log('View Bill icon clicked via delegation!');
-                const accountNumber = event.target.closest('.view-bill-btn').dataset.accountNumber;
-                showMessage('Viewing bill for ' + accountNumber, 'info'); // Use string concatenation
             }
         });
 
 
         // Attach direct listeners for modal controls and search/refresh
-        // These elements are part of the modal, which is loaded with customers.jsp
-        // They should be available when initCustomerPage runs due to the dynamic script loading strategy.
         if (closeModalBtn) closeModalBtn.addEventListener('click', closeCustomerModal);
         if (cancelFormBtn) cancelFormBtn.addEventListener('click', closeCustomerModal);
         if (customerForm) customerForm.addEventListener('submit', handleCustomerFormSubmit);
+        if (closeCustomerViewModalBtn) closeCustomerViewModalBtn.addEventListener('click', closeCustomerViewModal);
         if (searchInput) searchInput.addEventListener('input', handleSearchInput);
         if (refreshBtn) refreshBtn.addEventListener('click', () => fetchCustomers(searchInput.value));
 
