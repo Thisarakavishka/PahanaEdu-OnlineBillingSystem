@@ -52,8 +52,9 @@ CREATE TABLE customers
 CREATE TABLE items
 (
     id         INT AUTO_INCREMENT PRIMARY KEY,
-    name       VARCHAR(100)   NOT NULL,
+    name           VARCHAR(255)   NOT NULL UNIQUE,
     unit_price DECIMAL(10, 2) NOT NULL,
+    stock_quantity INT            NOT NULL DEFAULT 0,
 
     created_by INT       DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
