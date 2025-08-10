@@ -36,6 +36,7 @@ public class UserServlet extends HttpServlet {
 
     private UserService userService;
     private static final Logger LOGGER = LogUtil.getLogger(UserServlet.class);
+    private static final int INITIAL_ADMIN_ID = 1; // Constant for the initial admin's ID
 
     @Override
     public void init() {
@@ -61,17 +62,19 @@ public class UserServlet extends HttpServlet {
     }
 
     // Helper to convert UserDTO to a Map for JSON serialization
-    private Map<String, Object> userDtoToMap(UserDTO dto) {
+    // Now accepts optional username parameters for audit fields
+    private Map<String, Object> userDtoToMap(UserDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
         if (dto == null) return null;
         Map<String, Object> map = new HashMap<>();
         map.put("id", dto.getId());
         map.put("username", dto.getUsername());
         map.put("role", dto.getRole().name()); // Send role as String
-        map.put("createdBy", dto.getCreatedBy());
+        // Use provided usernames, fallback to ID if username not found, or '-' if null
+        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
         map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", dto.getUpdatedBy());
+        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
         map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", dto.getDeletedBy());
+        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
         map.put("deletedAt", dto.getDeletedAt());
         return map;
     }
@@ -134,14 +137,14 @@ public class UserServlet extends HttpServlet {
                 if (isAdded) {
                     // Fetch the newly added user to get its ID and audit timestamps
                     UserDTO addedUser = userService.searchByUsername(dto.getUsername());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", userDtoToMap(addedUser)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", userDtoToMap(addedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User addition failed unexpectedly."));
                 }
             } catch (PahanaEduOnlineBillingSystemException e) {
                 LOGGER.log(Level.WARNING, "Business error during user add: " + e.getExceptionType().name() + " - " + e.getMessage());
                 String errorMessage;
-                int statusCode = HttpServletResponse.SC_BAD_REQUEST;
+                int statusCode = HttpServletResponse.SC_BAD_REQUEST; // Default for business errors
                 switch (e.getExceptionType()) {
                     case USER_ALREADY_EXISTS:
                         errorMessage = "User with this username already exists.";
@@ -218,6 +221,7 @@ public class UserServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
         String currentUserRole = getUserRoleFromSession(req);
+        Integer currentUserId = getUserIdFromSession(req); // FIX: Initialize currentUserId here
 
         if (action == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Action parameter is missing."));
@@ -236,8 +240,11 @@ public class UserServlet extends HttpServlet {
                 break;
 
             case "list":
-                if (!"ADMIN".equals(currentUserRole)) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only admins can view user list."));
+                // Users with role "USER" should only see their own row, not the full list.
+                // This is handled in the frontend's renderUsers function.
+                // Backend still provides all data for ADMIN to filter.
+                if (!"ADMIN".equals(currentUserRole) && !"USER".equals(currentUserRole)) { // Only ADMIN and USER roles can list (USER will filter on frontend)
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: You do not have permission to view users."));
                     return;
                 }
                 try {
@@ -248,7 +255,11 @@ public class UserServlet extends HttpServlet {
                     }
                     List<UserDTO> users = userService.getAll(searchParams);
                     List<Map<String, Object>> userMaps = users.stream()
-                            .map(this::userDtoToMap)
+                            .map(user -> {
+                                // For list view, we don't fetch createdBy/updatedBy usernames for every user
+                                // to avoid N+1 query problem. Frontend can display IDs or '-'
+                                return userDtoToMap(user, null, null, null);
+                            })
                             .collect(Collectors.toList());
                     SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userMaps);
                 } catch (PahanaEduOnlineBillingSystemException e) {
@@ -261,8 +272,10 @@ public class UserServlet extends HttpServlet {
                 break;
 
             case "searchById":
-                if (!"ADMIN".equals(currentUserRole)) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only admins can search users by ID."));
+                // All roles can view their own details. Admins can view any.
+                // Backend needs to verify if the requested ID matches current user ID if role is USER.
+                if (currentUserId == null) {
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
                     return;
                 }
                 try {
@@ -271,10 +284,35 @@ public class UserServlet extends HttpServlet {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "User ID is required."));
                         return;
                     }
-                    Integer userId = Integer.parseInt(idStr);
-                    UserDTO user = userService.searchById(userId);
+                    Integer userIdToSearch = Integer.parseInt(idStr);
+
+                    // Authorization check for searchById
+                    if ("USER".equals(currentUserRole) && !userIdToSearch.equals(currentUserId)) {
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Users can only view their own profile."));
+                        return;
+                    }
+
+                    UserDTO user = userService.searchById(userIdToSearch);
                     if (user != null) {
-                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userDtoToMap(user));
+                        // Fetch usernames for audit fields for single view
+                        String createdByUsername = null;
+                        String updatedByUsername = null;
+                        String deletedByUsername = null;
+
+                        if (user.getCreatedBy() != null) {
+                            UserDTO creator = userService.searchById(user.getCreatedBy());
+                            if (creator != null) createdByUsername = creator.getUsername();
+                        }
+                        if (user.getUpdatedBy() != null) {
+                            UserDTO updater = userService.searchById(user.getUpdatedBy());
+                            if (updater != null) updatedByUsername = updater.getUsername();
+                        }
+                        if (user.getDeletedBy() != null) {
+                            UserDTO deleter = userService.searchById(user.getDeletedBy());
+                            if (deleter != null) deletedByUsername = deleter.getUsername();
+                        }
+
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userDtoToMap(user, createdByUsername, updatedByUsername, deletedByUsername));
                     } else {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_NOT_FOUND, Map.of("message", "User not found."));
                     }
@@ -298,23 +336,21 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // For PUT requests, parameters must be read from the request body manually
-        // The 'action' parameter also needs to be part of this body for distinction
         Map<String, String> requestBodyParams = parseUrlEncodedBody(req);
-        String action = requestBodyParams.get("action"); // Get action from parsed body
+        String action = requestBodyParams.get("action");
 
         String currentUserRole = getUserRoleFromSession(req);
         Integer currentUserId = getUserIdFromSession(req);
 
-        if (!"ADMIN".equals(currentUserRole)) {
-            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only admins can update users."));
+        if (currentUserId == null) {
+            SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
             return;
         }
 
         if ("update".equals(action)) {
             try {
                 UserDTO dto = new UserDTO();
-                String idStr = requestBodyParams.get("id"); // Get from parsed body
+                String idStr = requestBodyParams.get("id");
                 if (idStr != null && !idStr.isEmpty()) {
                     dto.setId(Integer.parseInt(idStr));
                 } else {
@@ -322,8 +358,33 @@ public class UserServlet extends HttpServlet {
                     return;
                 }
 
+                // Server-side Authorization for Edit
+                // Fetch the user being edited to check their role and ID
+                UserDTO userToEdit = userService.searchById(dto.getId());
+                if (userToEdit == null) {
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_NOT_FOUND, Map.of("message", "User to update not found."));
+                    return;
+                }
+
+                if ("ADMIN".equals(currentUserRole)) {
+                    if (userToEdit.getId() == INITIAL_ADMIN_ID) { // If target is initial admin (primitive int comparison)
+                        if (currentUserId != INITIAL_ADMIN_ID) { // And current user is NOT initial admin (primitive int comparison)
+                            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only the Initial Admin can edit themselves. Other admins cannot edit the Initial Admin."));
+                            return;
+                        }
+                    }
+                } else if ("USER".equals(currentUserRole)) { // If current user is a regular user
+                    if (userToEdit.getId() != currentUserId) { // And target is NOT themselves (primitive int comparison)
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Users can only edit their own profile."));
+                        return;
+                    }
+                } else { // Unknown role or no role
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: You do not have permission to edit users."));
+                    return;
+                }
+
+
                 dto.setUsername(requestBodyParams.get("username"));
-                // Only set password if it's provided in the form (means it's changed)
                 String password = requestBodyParams.get("password");
                 if (password != null && !password.isEmpty()) {
                     dto.setPassword(password);
@@ -339,7 +400,7 @@ public class UserServlet extends HttpServlet {
                 boolean isUpdated = userService.update(dto);
                 if (isUpdated) {
                     UserDTO updatedUser = userService.searchById(dto.getId());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", userDtoToMap(updatedUser)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", userDtoToMap(updatedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User update failed unexpectedly."));
                 }
@@ -366,6 +427,10 @@ public class UserServlet extends HttpServlet {
                         errorMessage = "A database error occurred during user update.";
                         statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
                         break;
+                    case UNAUTHORIZED_ACCESS: // For specific access denied by service layer
+                        errorMessage = e.getMessage(); // Use message from service layer
+                        statusCode = HttpServletResponse.SC_FORBIDDEN;
+                        break;
                     default:
                         errorMessage = "An unexpected business error occurred: " + e.getExceptionType().name();
                         break;
@@ -382,23 +447,23 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // For DELETE requests, parameters are usually from query string (req.getParameter)
         String action = req.getParameter("action");
         String currentUserRole = getUserRoleFromSession(req);
         Integer currentUserId = getUserIdFromSession(req);
 
-        if (!"ADMIN".equals(currentUserRole)) {
-            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only admins can delete users."));
-            return;
-        }
-        if (currentUserId == null) { // Should not happen if role is ADMIN, but good safety check
+        if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
             return;
         }
 
+        if (!"ADMIN".equals(currentUserRole)) { // Only admins can delete
+            SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only admins can delete users."));
+            return;
+        }
+
         if ("delete".equals(action)) {
-            String idStr = req.getParameter("id"); // Get from query param
-            String deletedByStr = req.getParameter("deletedBy"); // Get from query param
+            String idStr = req.getParameter("id");
+            String deletedByStr = req.getParameter("deletedBy"); // The ID of the user performing the delete
 
             if (idStr == null || idStr.trim().isEmpty() || deletedByStr == null || deletedByStr.trim().isEmpty()) {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "User ID and deleter ID are required for deletion."));
@@ -409,8 +474,24 @@ public class UserServlet extends HttpServlet {
                 Integer userIdToDelete = Integer.parseInt(idStr);
                 Integer deletedByUserId = Integer.parseInt(deletedByStr);
 
-                // Business logic for deletion (e.g., prevent deleting self, primary admin)
-                // This is already handled in UserServiceImpl.delete, but could be added here too for early exit.
+                // Server-side Authorization for Delete
+                UserDTO userToDelete = userService.searchById(userIdToDelete);
+                if (userToDelete == null) {
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_NOT_FOUND, Map.of("message", "User to delete not found."));
+                    return;
+                }
+
+                if (userToDelete.getId() == INITIAL_ADMIN_ID) { // If target is initial admin (primitive int comparison)
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: The Initial Admin cannot be deleted."));
+                    return;
+                } else if ("ADMIN".equals(userToDelete.getRole().name())) { // If target is another admin
+                    if (currentUserId != INITIAL_ADMIN_ID) { // And current user is NOT initial admin (primitive int comparison)
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Only the Initial Admin can delete other admins."));
+                        return;
+                    }
+                }
+                // If target is USER, any admin can delete (no further check needed here)
+
 
                 boolean isDeleted = userService.delete(userIdToDelete, deletedByUserId);
                 if (isDeleted) {
@@ -431,7 +512,7 @@ public class UserServlet extends HttpServlet {
                         statusCode = HttpServletResponse.SC_NOT_FOUND;
                         break;
                     case UNAUTHORIZED_ACCESS: // Specific for initial admin deletion block
-                        errorMessage = "You cannot delete this user.";
+                        errorMessage = e.getMessage(); // Use message from service layer
                         statusCode = HttpServletResponse.SC_FORBIDDEN;
                         break;
                     case USER_DELETION_FAILED:
