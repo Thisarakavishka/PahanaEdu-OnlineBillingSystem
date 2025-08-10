@@ -76,7 +76,7 @@ public class UserDAOImpl implements UserDAO {
             );
         } catch (PahanaEduOnlineBillingSystemException e) {
             LOGGER.log(Level.SEVERE, "Failed to add user: " + e.getMessage(), e);
-            throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_CREATE_FAILED);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_CREATION_FAILED);
         }
     }
 
@@ -123,14 +123,11 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public UserEntity searchById(Connection connection, Object... args) throws SQLException, ClassNotFoundException {
-        if (args.length < 1 || !(args[0] instanceof Integer)) {
-            throw new IllegalArgumentException("Search requires user ID");
-        }
-        Integer id = (Integer) args[0];
         String sql = "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL";
+        Integer userId = (Integer) args[0];
         ResultSet resultSet = null;
         try {
-            resultSet = DAOUtil.executeQuery(connection, sql, id);
+            resultSet = DAOUtil.executeQuery(connection, sql, userId);
             if (resultSet.next()) {
                 return mapResultSetToUserEntity(resultSet);
             }
@@ -146,18 +143,26 @@ public class UserDAOImpl implements UserDAO {
         StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM users WHERE deleted_at IS NULL");
         List<Object> params = new ArrayList<>();
 
-        // Add search parameters
-        if (searchParams != null && searchParams.containsKey("username")) {
-            sqlBuilder.append(" AND username LIKE ?");
-            params.add("%" + searchParams.get("username") + "%");
+        if (searchParams != null) {
+            // Prioritize generic 'search' term
+            if (searchParams.containsKey("search")) {
+                String searchTerm = "%" + searchParams.get("search") + "%";
+                sqlBuilder.append(" AND (username LIKE ? OR role LIKE ?)"); // Assuming search applies to username and role
+                params.add(searchTerm);
+                params.add(searchTerm);
+            } else {
+                // Specific search parameters if no generic search term is provided
+                if (searchParams.containsKey("username")) {
+                    sqlBuilder.append(" AND username LIKE ?");
+                    params.add("%" + searchParams.get("username") + "%");
+                }
+                if (searchParams.containsKey("role")) {
+                    sqlBuilder.append(" AND role = ?");
+                    params.add(searchParams.get("role").toUpperCase());
+                }
+            }
         }
-
-        if (searchParams != null && searchParams.containsKey("role")) {
-            sqlBuilder.append(" AND role = ?");
-            params.add(searchParams.get("role").toUpperCase());
-        }
-
-        sqlBuilder.append(" ORDER BY username ASC");
+        sqlBuilder.append(" ORDER BY id ASC");
 
         ResultSet resultSet = null;
         try {
