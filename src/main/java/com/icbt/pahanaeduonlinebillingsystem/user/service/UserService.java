@@ -14,4 +14,6 @@ public interface UserService extends CrudService<UserDTO> {
 
     UserDTO authenticate(String username, String password) throws SQLException, ClassNotFoundException;
 
+    UserDTO searchByUsername(String username) throws SQLException, ClassNotFoundException;
+
 }

@@ -28,14 +28,14 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LogUtil.getLogger(UserServiceImpl.class);
     private final UserDAO userDAO;
-    private static final int INITIAL_ADMIN_ID = 1;
+    private static final int INITIAL_ADMIN_ID = 1; // Assuming the first user inserted gets ID 1
 
     public UserServiceImpl() {
         this.userDAO = new UserDAOImpl();
     }
 
     @Override
-    public UserDTO authenticate(String username, String password) throws SQLException, ClassNotFoundException {
+    public UserDTO authenticate(String username, String password) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
@@ -62,11 +62,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean add(UserDTO dto) throws SQLException, ClassNotFoundException {
+    public boolean add(UserDTO dto) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false);
+            connection.setAutoCommit(false); // Start transaction
 
             if (userDAO.searchByUsername(connection, dto.getUsername()) != null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_ALREADY_EXISTS);
@@ -76,49 +76,50 @@ public class UserServiceImpl implements UserService {
             String hashedPassword = PasswordUtil.hashPassword(dto.getPassword(), salt);
 
             dto.setSalt(salt);
-            dto.setPassword(hashedPassword);
+            dto.setPassword(hashedPassword); // Store hashed password in DTO
 
             UserEntity userEntity = UserConverter.toEntity(dto);
             boolean isUserAddedSuccess = userDAO.add(connection, userEntity);
             if (isUserAddedSuccess) {
-                connection.commit();
+                connection.commit(); // Commit transaction
                 LOGGER.log(Level.INFO, "User added successfully: " + dto.getUsername());
             } else {
-                connection.rollback();
+                connection.rollback(); // Rollback if add failed
                 LOGGER.log(Level.WARNING, "Failed to add user: " + dto.getUsername() + ", rolling back.");
-                throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_CREATE_FAILED);
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_CREATION_FAILED);
             }
             return isUserAddedSuccess;
         } catch (SQLException e) {
-            DBUtil.rollbackConnection(connection);
+            DBUtil.rollbackConnection(connection); // Rollback on SQL exception
             LOGGER.log(Level.SEVERE, "Database error during user add: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
         }
-
     }
 
     @Override
-    public boolean update(UserDTO dto) throws SQLException, ClassNotFoundException {
+    public boolean update(UserDTO dto) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false);
+            connection.setAutoCommit(false); // Start transaction
 
             UserEntity existingUser = userDAO.searchById(connection, dto.getId());
             if (existingUser == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_NOT_FOUND);
             }
 
-            if (dto.getPassword() != null && !dto.getPassword().isEmpty() && !PasswordUtil.verifyPassword(dto.getPassword(), existingUser.getPassword(), existingUser.getSalt())) {
+            // If a new password is provided in DTO, re-hash it. Otherwise, keep existing.
+            if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
                 String newSalt = PasswordUtil.generateSalt();
-                String hashedPassword = PasswordUtil.hashPassword(dto.getPassword(), newSalt);
+                String newHashedPassword = PasswordUtil.hashPassword(dto.getPassword(), newSalt);
                 dto.setSalt(newSalt);
-                dto.setPassword(hashedPassword);
+                dto.setPassword(newHashedPassword);
             } else {
-                dto.setSalt(existingUser.getSalt());
+                // Keep existing hashed password and salt if password is not changed
                 dto.setPassword(existingUser.getPassword());
+                dto.setSalt(existingUser.getSalt());
             }
 
             UserEntity userEntity = UserConverter.toEntity(dto);
@@ -142,43 +143,44 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean delete(Object... args) throws SQLException, ClassNotFoundException {
+    public boolean delete(Object... args) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
         if (args.length < 2 || !(args[0] instanceof Integer) || !(args[1] instanceof Integer)) {
-            throw new IllegalArgumentException("Delete requires user ID and deleter ID.");
+            throw new IllegalArgumentException("Delete requires user ID (to delete) and deleter ID.");
         }
 
         Integer userIdToDelete = (Integer) args[0];
         Integer deletedByUserId = (Integer) args[1];
 
-        // Stop deletion of the initial admin user
+        // --- Business Rule: Prevent deletion of the initial admin user ---
         if (userIdToDelete.equals(INITIAL_ADMIN_ID)) {
             LOGGER.log(Level.WARNING, "Attempt to delete initial admin user (ID: " + INITIAL_ADMIN_ID + ") by user ID: " + deletedByUserId + " was blocked.");
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.UNAUTHORIZED_ACCESS);
         }
+        // --- End Business Rule ---
 
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false);
+            connection.setAutoCommit(false); // Start transaction
 
-            UserEntity userEntity = userDAO.searchById(connection, userIdToDelete);
-            if (userEntity == null) {
+            UserEntity userToDelete = userDAO.searchById(connection, userIdToDelete);
+            if (userToDelete == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_NOT_FOUND);
             }
 
             boolean isUserDeletedSuccess = userDAO.delete(connection, userIdToDelete, deletedByUserId);
             if (isUserDeletedSuccess) {
                 connection.commit();
-                LOGGER.log(Level.INFO, "User soft deleted successfully: ID " + userIdToDelete + " by user ID " + deletedByUserId);
+                LOGGER.log(Level.INFO, "User soft-deleted successfully: ID " + userIdToDelete + " by user ID " + deletedByUserId);
             } else {
                 connection.rollback();
-                LOGGER.log(Level.WARNING, "Failed to soft delete user: ID " + userIdToDelete + ", rolling back.");
+                LOGGER.log(Level.WARNING, "Failed to soft-delete user: ID " + userIdToDelete + ", rolling back.");
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_DELETION_FAILED);
             }
             return isUserDeletedSuccess;
         } catch (SQLException e) {
             DBUtil.rollbackConnection(connection);
-            LOGGER.log(Level.SEVERE, "Database error during user soft delete: " + e.getMessage(), e);
+            LOGGER.log(Level.SEVERE, "Database error during user soft-delete: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
@@ -186,11 +188,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO searchById(Object... args) throws SQLException, ClassNotFoundException {
+    public UserDTO searchById(Object... args) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
+        if (args.length < 1 || !(args[0] instanceof Integer)) {
+            throw new IllegalArgumentException("Search by ID requires user ID.");
+        }
+        Integer id = (Integer) args[0];
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            UserEntity userEntity = userDAO.searchById(connection, args);
+            UserEntity userEntity = userDAO.searchById(connection, id);
             return UserConverter.toDto(userEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during search userById: " + e.getMessage(), e);
@@ -201,7 +207,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDTO> getAll(Map<String, String> searchParams) throws SQLException, ClassNotFoundException {
+    public UserDTO searchByUsername(String username) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            UserEntity userEntity = userDAO.searchByUsername(connection, username);
+            return UserConverter.toDto(userEntity);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during searchByUsername: " + username + " - " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
+
+    @Override
+    public List<UserDTO> getAll(Map<String, String> searchParams) throws ClassNotFoundException { // Removed SQLException, ClassNotFoundException
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
