@@ -135,45 +135,60 @@
 <!-- View Item Modal -->
 <div id="itemViewModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative">
-        <button id="closeItemViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
+
+        <!-- Close Button -->
+        <button id="closeItemViewModalBtn"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Item Details</h2>
 
-        <div class="space-y-4">
+        <!-- Title -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Item Details</h2>
+
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Item ID</label>
-                <p id="viewItemId" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Item ID</label>
+                <p id="viewItemId" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Item Name</label>
-                <p id="viewItemName" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Item Name</label>
+                <p id="viewItemName" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Unit Price</label>
-                <p id="viewItemUnitPrice" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Unit Price</label>
+                <p id="viewItemUnitPrice" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Stock Quantity</label>
-                <p id="viewItemStockQuantity" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Stock Quantity</label>
+                <p id="viewItemStockQuantity" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Created By</label>
-                <p id="viewItemCreatedBy" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Created By</label>
+                <p id="viewItemCreatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Created At</label>
-                <p id="viewItemCreatedAt" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Created At</label>
+                <p id="viewItemCreatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Last Updated By</label>
-                <p id="viewItemUpdatedBy" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated By</label>
+                <p id="viewItemUpdatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Last Updated At</label>
-                <p id="viewItemUpdatedAt" class="w-full px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700"></p>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated At</label>
+                <p id="viewItemUpdatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
             </div>
+
         </div>
     </div>
 </div>
