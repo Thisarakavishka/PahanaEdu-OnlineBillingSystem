@@ -45,14 +45,22 @@
                     <span>Dashboard</span>
                 </a>
             </li>
+            <li>
+                <a class="flex items-center space-x-3 p-3 rounded-lg transition duration-200 ease-in-out
+                          <%= "bills".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
+                   href="dashboard.jsp?page=bills">
+                    <i data-feather="user-plus" class="w-5 h-5"></i>
+                    <span>Bill</span>
+                </a>
+            </li>
             <!-- Admin Navigation Links -->
-            <% if ("admin".equals(role)) { %>
+            <% if ("ADMIN".equals(role)) { %>
             <li>
                 <a class="flex items-center space-x-3 p-3 rounded-lg transition duration-200 ease-in-out
                           <%= "users".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
                    href="dashboard.jsp?page=users">
                     <i data-feather="users" class="w-5 h-5"></i>
-                    <span>Manage Users</span>
+                    <span>Users</span>
                 </a>
             </li>
             <li>
@@ -60,7 +68,7 @@
                           <%= "customers".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
                    href="dashboard.jsp?page=customers">
                     <i data-feather="user-plus" class="w-5 h-5"></i>
-                    <span>Manage Customers</span>
+                    <span>Customers</span>
                 </a>
             </li>
             <li>
@@ -68,7 +76,7 @@
                           <%= "items".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
                    href="dashboard.jsp?page=items">
                     <i data-feather="package" class="w-5 h-5"></i>
-                    <span>Manage Items</span>
+                    <span>Items</span>
                 </a>
             </li>
             <li>
@@ -86,7 +94,7 @@
                           <%= "customers".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
                    href="dashboard.jsp?page=customers">
                     <i data-feather="users" class="w-5 h-5"></i>
-                    <span>My Customers</span>
+                    <span>Customers</span>
                 </a>
             </li>
             <li>
@@ -94,7 +102,7 @@
                           <%= "items".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 text-gray-300 hover:text-white" %>"
                    href="dashboard.jsp?page=items">
                     <i data-feather="package" class="w-5 h-5"></i>
-                    <span>View Items</span>
+                    <span>Items</span>
                 </a>
             </li>
             <% } %>
@@ -111,7 +119,7 @@
         <!-- Logout Button at the bottom -->
         <div class="mt-auto pt-4 border-t border-gray-800">
             <a class="flex items-center space-x-3 p-3 rounded-lg text-red-400 hover:bg-red-600 hover:text-white font-medium transition duration-200 ease-in-out"
-               href="users?action=logout">
+               href="users?action=index">
                 <i data-feather="log-out" class="w-5 h-5"></i>
                 <span>Logout</span>
             </a>
