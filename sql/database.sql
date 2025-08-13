@@ -73,9 +73,7 @@ CREATE TABLE bills
 (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     customer_id  INT            NOT NULL,
-    generated_by INT            NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
-    generated_at TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
 
     created_by   INT                 DEFAULT NULL,
     created_at   TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
@@ -83,7 +81,6 @@ CREATE TABLE bills
     deleted_at   TIMESTAMP      NULL DEFAULT NULL,
 
     FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE,
-    FOREIGN KEY (generated_by) REFERENCES users (id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
     FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL
 );
@@ -94,7 +91,7 @@ CREATE TABLE bill_details
     id                 INT AUTO_INCREMENT PRIMARY KEY,
     bill_id            INT            NOT NULL,
     item_id            INT            NOT NULL,
-    item_name          VARCHAR(255)   NOT NULL,
+    item_name_at_sale  VARCHAR(255)   NOT NULL,
     unit_price_at_sale DECIMAL(10, 2) NOT NULL,
     units              INT            NOT NULL,
     total              DECIMAL(10, 2) NOT NULL,
