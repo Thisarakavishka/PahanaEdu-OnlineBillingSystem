@@ -217,4 +217,23 @@ public class CustomerServiceImpl implements CustomerService {
             DBUtil.closeConnection(connection);
         }
     }
+
+    @Override
+    public CustomerDTO searchByPhone(String phone) throws SQLException, ClassNotFoundException {
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            CustomerEntity customerEntity = customerDAO.searchByPhone(connection, phone);
+
+            if (customerEntity == null) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
+            }
+            return CustomerConverter.toDto(customerEntity);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during customer search by phone: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
 }
