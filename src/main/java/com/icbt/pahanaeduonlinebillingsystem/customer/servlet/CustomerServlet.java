@@ -185,9 +185,32 @@ public class CustomerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             String accountNumber = req.getParameter("accountNumber");
+            String phone = req.getParameter("phone");
             Map<String, String> searchParams = new HashMap<>();
 
-            if (accountNumber != null && !accountNumber.trim().isEmpty()) {
+            if (phone != null && !phone.trim().isEmpty()) {
+                CustomerDTO dto = customerService.searchByPhone(phone);
+
+                // Fetch usernames for audit fields for single view
+                String createdByUsername = null;
+                String updatedByUsername = null;
+                String deletedByUsername = null;
+
+                if (dto.getCreatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getCreatedBy());
+                    if (user != null) createdByUsername = user.getUsername();
+                }
+                if (dto.getUpdatedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getUpdatedBy());
+                    if (user != null) updatedByUsername = user.getUsername();
+                }
+                if (dto.getDeletedBy() != null) {
+                    UserDTO user = userService.searchById(dto.getDeletedBy());
+                    if (user != null) deletedByUsername = user.getUsername();
+                }
+
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, customerDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
+            } else if (accountNumber != null && !accountNumber.trim().isEmpty()) {
                 CustomerDTO dto = customerService.searchByAccountNumber(accountNumber);
 
                 // Fetch usernames for audit fields for single view

@@ -199,6 +199,21 @@ public class CustomerDAOImpl implements CustomerDAO {
         }
     }
 
+    @Override
+    public CustomerEntity searchByPhone(Connection connection, String phone) throws SQLException {
+        String sql = "SELECT * FROM customers WHERE phone = ? AND deleted_at IS NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql, phone);
+            if (resultSet.next()) {
+                return mapResultSetToCustomerEntity(resultSet);
+            }
+            return null;
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
+
     private CustomerEntity mapResultSetToCustomerEntity(ResultSet rs) throws SQLException {
         CustomerEntity entity = new CustomerEntity();
         entity.setId(rs.getInt("id"));
