@@ -14,4 +14,6 @@ public interface CustomerService extends CrudService<CustomerDTO> {
 
     CustomerDTO searchByAccountNumber(Object... args) throws SQLException, ClassNotFoundException;
 
+    CustomerDTO searchByPhone(String phone) throws SQLException, ClassNotFoundException;
+
 }
