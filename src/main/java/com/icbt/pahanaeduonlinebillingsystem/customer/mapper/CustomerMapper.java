@@ -1,17 +1,19 @@
-package com.icbt.pahanaeduonlinebillingsystem.customer.converter;
+package com.icbt.pahanaeduonlinebillingsystem.customer.mapper;
 
 import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Thisara Kavishka
  * @date 2025-07-19
  * @since 1.0
  */
-public class CustomerConverter {
+public class CustomerMapper {
 
     public static CustomerEntity toEntity(CustomerDTO dto) {
         if (dto == null) {
@@ -65,5 +67,29 @@ public class CustomerConverter {
             }
         }
         return dtos;
+    }
+
+    public static Map<String, Object> toMap(CustomerDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
+        if (dto == null) {
+            return null;
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.getId());
+        map.put("accountNumber", dto.getAccountNumber());
+        map.put("name", dto.getName());
+        map.put("address", dto.getAddress());
+        map.put("phone", dto.getPhone());
+        map.put("unitsConsumed", dto.getUnitsConsumed());
+        map.put("createdAt", dto.getCreatedAt());
+        map.put("updatedAt", dto.getUpdatedAt());
+        map.put("deletedAt", dto.getDeletedAt());
+
+        // Use the provided username if available, otherwise fallback to the ID from the DTO
+        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
+        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
+        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
+
+        return map;
     }
 }
