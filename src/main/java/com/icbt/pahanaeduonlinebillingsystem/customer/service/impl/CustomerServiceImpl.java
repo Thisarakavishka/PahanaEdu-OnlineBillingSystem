@@ -9,7 +9,7 @@ import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 import com.icbt.pahanaeduonlinebillingsystem.customer.service.CustomerService;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
-import com.icbt.pahanaeduonlinebillingsystem.customer.converter.CustomerConverter;
+import com.icbt.pahanaeduonlinebillingsystem.customer.mapper.CustomerMapper;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -48,7 +48,7 @@ public class CustomerServiceImpl implements CustomerService {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_PHONE_NUMBER_ALREADY_EXISTS);
             }
 
-            CustomerEntity customerEntity = CustomerConverter.toEntity(dto);
+            CustomerEntity customerEntity = CustomerMapper.toEntity(dto);
             boolean isCustomerAddedSuccess = customerDAO.add(connection, customerEntity);
 
             if (isCustomerAddedSuccess) {
@@ -94,7 +94,7 @@ public class CustomerServiceImpl implements CustomerService {
             // Ensure the correct record is updated
             dto.setId(existingCustomer.getId());
 
-            CustomerEntity customerEntity = CustomerConverter.toEntity(dto);
+            CustomerEntity customerEntity = CustomerMapper.toEntity(dto);
             boolean isCustomerUpdatedSuccess = customerDAO.update(connection, customerEntity);
             if (isCustomerUpdatedSuccess) {
                 connection.commit();
@@ -168,7 +168,7 @@ public class CustomerServiceImpl implements CustomerService {
             if (customerEntity == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
             }
-            return CustomerConverter.toDto(customerEntity);
+            return CustomerMapper.toDto(customerEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during customer search by ID: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -184,7 +184,7 @@ public class CustomerServiceImpl implements CustomerService {
         try {
             connection = DBUtil.getConnection();
             List<CustomerEntity> customerEntityList = customerDAO.getAll(connection, searchParams);
-            return CustomerConverter.toDTOList(customerEntityList);
+            return CustomerMapper.toDTOList(customerEntityList);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during getAll customers: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -209,7 +209,7 @@ public class CustomerServiceImpl implements CustomerService {
             if (customerEntity == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
             }
-            return CustomerConverter.toDto(customerEntity);
+            return CustomerMapper.toDto(customerEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during customer search by AccountNumber: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -228,7 +228,7 @@ public class CustomerServiceImpl implements CustomerService {
             if (customerEntity == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.CUSTOMER_NOT_FOUND);
             }
-            return CustomerConverter.toDto(customerEntity);
+            return CustomerMapper.toDto(customerEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during customer search by phone: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
