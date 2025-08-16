@@ -41,6 +41,30 @@ public class BillDAOImpl implements BillDAO {
     }
 
     @Override
+    public int addBill(Connection connection, BillEntity entity) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO bills (customer_id, total_amount, created_by, created_at) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            pst.setInt(1, entity.getCustomerId());
+            pst.setBigDecimal(2, entity.getTotalAmount());
+            pst.setObject(3, entity.getCreatedBy());
+            pst.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+            pst.executeUpdate();
+
+            try (ResultSet resultSet = pst.getGeneratedKeys()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            LOGGER.log(Level.SEVERE, "Failed to add Bill in DAO: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+        return -1;
+    }
+
+
+    @Override
     public boolean update(Connection connection, BillEntity entity) throws SQLException, ClassNotFoundException {
         throw new UnsupportedOperationException("Update method not implemented yet");
     }
@@ -94,7 +118,7 @@ public class BillDAOImpl implements BillDAO {
             params.add(searchTerm);
             params.add(searchTerm);
         }
-        sqlBuilder.append(" ORDER BY name ASC");
+        sqlBuilder.append(" ORDER BY id ASC");
 
         ResultSet resultSet = null;
         try {

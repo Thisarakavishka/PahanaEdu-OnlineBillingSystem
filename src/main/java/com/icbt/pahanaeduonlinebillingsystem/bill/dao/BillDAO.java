@@ -1,13 +1,10 @@
 package com.icbt.pahanaeduonlinebillingsystem.bill.dao;
 
-import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillDetailEntity;
 import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillEntity;
 import com.icbt.pahanaeduonlinebillingsystem.common.base.CrudDAO;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Thisara Kavishka
@@ -15,4 +12,7 @@ import java.util.Map;
  * @since 1.0
  */
 public interface BillDAO extends CrudDAO<BillEntity> {
+
+    int addBill(Connection connection, BillEntity entity) throws SQLException, ClassNotFoundException;
+
 }

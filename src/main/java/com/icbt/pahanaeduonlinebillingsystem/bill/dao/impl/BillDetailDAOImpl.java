@@ -8,10 +8,8 @@ import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -47,6 +45,28 @@ public class BillDetailDAOImpl implements BillDetailDAO {
     }
 
     @Override
+    public void addBillDetails(Connection connection, List<BillDetailEntity> details) throws SQLException {
+        String sql = "INSERT INTO bill_details (bill_id, item_id, item_name_at_sale, unit_price_at_sale, units, total, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            for (BillDetailEntity detail : details) {
+                pst.setInt(1, detail.getBillId());
+                pst.setInt(2, detail.getItemId());
+                pst.setString(3, detail.getItemNameAtSale());
+                pst.setBigDecimal(4, detail.getUnitPriceAtSale());
+                pst.setInt(5, detail.getUnits());
+                pst.setBigDecimal(6, detail.getTotal());
+                pst.setObject(7, detail.getCreatedBy());
+                pst.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+                pst.addBatch();
+            }
+            pst.executeBatch();
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            LOGGER.log(Level.SEVERE, "Failed to add bill details in DAO: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
     public boolean update(Connection connection, BillDetailEntity entity) throws SQLException, ClassNotFoundException {
         throw new UnsupportedOperationException("Update method not implemented yet");
     }
@@ -59,18 +79,23 @@ public class BillDetailDAOImpl implements BillDetailDAO {
 
     @Override
     public BillDetailEntity searchById(Connection connection, Object... args) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT * FROM bill_details WHERE bill_id = ? AND deleted_at IS NULL";
-        Integer itemId = (Integer) args[0];
-        ResultSet resultSet = null;
+        throw new UnsupportedOperationException("Update method not implemented yet");
+    }
+
+    @Override
+    public List<BillDetailEntity> getBillDetails(Connection connection, Integer billId) throws SQLException {
+        List<BillDetailEntity> details = new ArrayList<>();
+        String sql = "SELECT * FROM bill_details WHERE bill_id = ?";
+        ResultSet rs = null;
         try {
-            resultSet = DAOUtil.executeQuery(connection, sql, itemId);
-            if (resultSet.next()) {
-                return mapResultSetToBillDetailEntity(resultSet);
+            rs = DAOUtil.executeQuery(connection, sql, billId);
+            while (rs.next()) {
+                details.add(mapResultSetToBillDetailEntity(rs));
             }
-            return null;
         } finally {
-            DBUtil.closeResultSet(resultSet);
+            DBUtil.closeResultSet(rs);
         }
+        return details;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.icbt.pahanaeduonlinebillingsystem.common.util;
 
+import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDTO;
+import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDetailDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 
 import java.util.HashMap;
@@ -35,6 +37,33 @@ public class Validator {
         // Validate Units Consumed: Must be a non-negative number.
         if (dto.getUnitsConsumed() < 0) {
             errors.put("unitsConsumed", "Units consumed cannot be negative.");
+        }
+
+        return errors;
+    }
+
+    public static Map<String, String> billValidate(BillDTO dto) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. Validate Customer ID: Must be a positive number.
+        if (dto.getCustomerId() <= 0) {
+            errors.put("customerId", "A valid customer must be selected.");
+        }
+
+        // 2. Validate Item List: Must not be null or empty.
+        if (dto.getDetails() == null || dto.getDetails().isEmpty()) {
+            errors.put("items", "A bill must contain at least one item.");
+        } else {
+            // 3. Validate Each Item in the List
+            for (int i = 0; i < dto.getDetails().size(); i++) {
+                BillDetailDTO detail = dto.getDetails().get(i);
+                if (detail.getItemId() <= 0) {
+                    errors.put("item_" + i + "_id", "An invalid item was included in the bill.");
+                }
+                if (detail.getUnits() <= 0) {
+                    errors.put("item_" + i + "_units", "Item quantity must be at least 1.");
+                }
+            }
         }
 
         return errors;
