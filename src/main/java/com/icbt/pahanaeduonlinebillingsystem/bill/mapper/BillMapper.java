@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Thisara Kavishka
@@ -121,6 +122,19 @@ public class BillMapper {
         return dtos;
     }
 
+    public static Map<String, Object> detailToMap(BillDetailDTO dto) {
+        if (dto == null) return null;
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.getId());
+        map.put("billId", dto.getBillId());
+        map.put("itemId", dto.getItemId());
+        map.put("itemNameAtSale", dto.getItemNameAtSale());
+        map.put("unitPriceAtSale", dto.getUnitPriceAtSale());
+        map.put("units", dto.getUnits());
+        map.put("total", dto.getTotal());
+        return map;
+    }
+
     public static Map<String, Object> toToMap(BillDTO dto) {
         if (dto == null) return null;
         Map<String, Object> map = new HashMap<>();
@@ -128,14 +142,19 @@ public class BillMapper {
         map.put("customerId", dto.getCustomerId());
         map.put("customerAccountNumber", dto.getCustomerAccountNumber());
         map.put("customerName", dto.getCustomerName());
-        map.put("generatedByUsername", dto.getCreateByUsername()); // Corrected field
+        map.put("generatedByUsername", dto.getCreateByUsername());
         map.put("totalAmount", dto.getTotalAmount());
-        map.put("details", dto.getDetails());
         map.put("generatedAt", dto.getCreatedAt());
-        map.put("createdBy", dto.getCreatedBy());
-        map.put("createdAt", dto.getCreatedAt());
-        map.put("deletedBy", dto.getDeletedBy());
-        map.put("deletedAt", dto.getDeletedAt());
+
+        // Convert the list of detail DTOs into a list of maps
+        if (dto.getDetails() != null) {
+            List<Map<String, Object>> detailMaps = dto.getDetails().stream()
+                    .map(BillMapper::detailToMap)
+                    .collect(Collectors.toList());
+            map.put("details", detailMaps);
+        } else {
+            map.put("details", new ArrayList<>());
+        }
         return map;
     }
 }
