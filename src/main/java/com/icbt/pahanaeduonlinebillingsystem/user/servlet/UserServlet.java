@@ -36,7 +36,7 @@ public class UserServlet extends HttpServlet {
 
     private UserService userService;
     private static final Logger LOGGER = LogUtil.getLogger(UserServlet.class);
-    private static final int INITIAL_ADMIN_ID = 1; // Constant for the initial admin's ID
+    private static final int INITIAL_ADMIN_ID = 1;
 
     @Override
     public void init() {
@@ -104,8 +104,6 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // For POST, parameters are usually from form submission (req.getParameter)
-        // We'll rely on the 'action' parameter to distinguish login from add user.
         String action = req.getParameter("action");
 
         if ("add".equals(action)) {
@@ -166,6 +164,15 @@ public class UserServlet extends HttpServlet {
                 LOGGER.log(Level.SEVERE, "Unexpected error during POST /users (add user): " + e.getMessage(), e);
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Internal server error during user addition."));
             }
+        } else if ("logout".equals(action)) {
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                String username = (String) session.getAttribute("username");
+                session.invalidate();
+                LOGGER.log(Level.INFO, "User '" + username + "' logged out successfully.");
+            }
+            // Redirect to the login page
+            resp.sendRedirect(req.getContextPath() + "/index.jsp");
         } else {
             // Handle Login (original doPost logic)
             String username = req.getParameter("username");
@@ -229,16 +236,6 @@ public class UserServlet extends HttpServlet {
         }
 
         switch (action) {
-            case "logout":
-                HttpSession session = req.getSession(false);
-                if (session != null) {
-                    String username = (String) session.getAttribute("username");
-                    session.invalidate(); // clear current session
-                    LOGGER.log(Level.INFO, "User '" + username + "' logged out successfully.");
-                }
-                resp.sendRedirect(req.getContextPath() + "/index.jsp"); // Corrected context path usage
-                break;
-
             case "list":
                 // Users with role "USER" should only see their own row, not the full list.
                 // This is handled in the frontend's renderUsers function.
