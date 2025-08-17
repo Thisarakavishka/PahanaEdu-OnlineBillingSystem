@@ -5,7 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBil
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.PasswordUtil;
-import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserConverter;
+import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dao.UserDAO;
 import com.icbt.pahanaeduonlinebillingsystem.user.dao.impl.UserDAOImpl;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
 
             if (PasswordUtil.verifyPassword(password, userEntity.getPassword(), userEntity.getSalt())) {
                 LOGGER.log(Level.INFO, "User authenticated successfully: " + username);
-                return UserConverter.toDto(userEntity);
+                return UserMapper.toDto(userEntity);
             } else {
                 LOGGER.log(Level.WARNING, "Authentication failed: Invalid password for username: " + username);
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.INVALID_CREDENTIALS);
@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
             dto.setSalt(salt);
             dto.setPassword(hashedPassword); // Store hashed password in DTO
 
-            UserEntity userEntity = UserConverter.toEntity(dto);
+            UserEntity userEntity = UserMapper.toEntity(dto);
             boolean isUserAddedSuccess = userDAO.add(connection, userEntity);
             if (isUserAddedSuccess) {
                 connection.commit(); // Commit transaction
@@ -122,7 +122,7 @@ public class UserServiceImpl implements UserService {
                 dto.setSalt(existingUser.getSalt());
             }
 
-            UserEntity userEntity = UserConverter.toEntity(dto);
+            UserEntity userEntity = UserMapper.toEntity(dto);
             boolean isUserUpdatedSuccess = userDAO.update(connection, userEntity);
             if (isUserUpdatedSuccess) {
                 connection.commit();
@@ -197,7 +197,7 @@ public class UserServiceImpl implements UserService {
         try {
             connection = DBUtil.getConnection();
             UserEntity userEntity = userDAO.searchById(connection, id);
-            return UserConverter.toDto(userEntity);
+            return UserMapper.toDto(userEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during search userById: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -212,7 +212,7 @@ public class UserServiceImpl implements UserService {
         try {
             connection = DBUtil.getConnection();
             UserEntity userEntity = userDAO.searchByUsername(connection, username);
-            return UserConverter.toDto(userEntity);
+            return UserMapper.toDto(userEntity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during searchByUsername: " + username + " - " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -227,7 +227,7 @@ public class UserServiceImpl implements UserService {
         try {
             connection = DBUtil.getConnection();
             List<UserEntity> userEntities = userDAO.getAll(connection, searchParams);
-            return UserConverter.toDTOList(userEntities);
+            return UserMapper.toDTOList(userEntities);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during getAll users: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);

@@ -3,6 +3,7 @@ package com.icbt.pahanaeduonlinebillingsystem.common.util;
 import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDTO;
 import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDetailDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
+import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +65,33 @@ public class Validator {
                     errors.put("item_" + i + "_units", "Item quantity must be at least 1.");
                 }
             }
+        }
+
+        return errors;
+    }
+
+    public static Map<String, String> userValidate(UserDTO dto) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. Validate Username
+        if (dto.getUsername() == null || dto.getUsername().trim().isEmpty()) {
+            errors.put("username", "Username cannot be empty.");
+        } else if (dto.getUsername().trim().length() < 3) {
+            errors.put("username", "Username must be at least 3 characters long.");
+        }
+
+        // 2. Validate Password (only for new users, so we check if an ID is present)
+        if (dto.getId() == 0) { // Assuming ID is 0 for a new, unsaved user
+            if (dto.getPassword() == null || dto.getPassword().isEmpty()) {
+                errors.put("password", "Password is required for a new user.");
+            } else if (dto.getPassword().length() < 6) {
+                errors.put("password", "Password must be at least 6 characters long.");
+            }
+        }
+
+        // 3. Validate Role
+        if (dto.getRole() == null) {
+            errors.put("role", "A user role must be selected.");
         }
 
         return errors;
