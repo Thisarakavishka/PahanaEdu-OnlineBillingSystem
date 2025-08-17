@@ -18,13 +18,15 @@ public class DBUtil {
 
     private static final Logger LOGGER = Logger.getLogger(DBUtil.class.getName());
 
-    private static String dbUrl;
-    private static String dbUsername;
-    private static String dbPassword;
+    private static final String dbUrl;
+    private static final String dbUsername;
+    private static final String dbPassword;
+    private static final String dbDriver;
 
     static {
         try {
-            // First, check for CI/CD environment variables set by GitHub Actions
+            // This block makes the utility "CI-aware".
+            // It checks for environment variables set by the GitHub Actions pipeline first.
             String ciDbUrl = System.getenv("TEST_DB_URL");
             String ciDbUser = System.getenv("TEST_DB_USER");
             String ciDbPass = System.getenv("TEST_DB_PASSWORD");
@@ -35,9 +37,10 @@ public class DBUtil {
                 dbUrl = ciDbUrl;
                 dbUsername = ciDbUser;
                 dbPassword = ciDbPass;
+                dbDriver = "com.mysql.cj.jdbc.Driver"; // Driver is standard for CI
             } else {
                 // --- Local Development Environment ---
-                LOGGER.info("Local environment detected. Loading database configuration from db.properties.");
+                LOGGER.info("Local environment detected. Loading from db.properties.");
                 Properties properties = new Properties();
                 try (InputStream inputStream = DBUtil.class.getClassLoader().getResourceAsStream("db.properties")) {
                     if (inputStream == null) {
@@ -47,11 +50,12 @@ public class DBUtil {
                     dbUrl = properties.getProperty("db.url");
                     dbUsername = properties.getProperty("db.username");
                     dbPassword = properties.getProperty("db.password");
+                    dbDriver = properties.getProperty("db.driver");
                 }
             }
 
             // Register the JDBC driver once
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName(dbDriver);
             LOGGER.info("JDBC driver loaded successfully.");
 
         } catch (Exception e) {
@@ -63,16 +67,16 @@ public class DBUtil {
     private DBUtil() {
     }
 
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         try {
             return DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to establish database connection to: " + dbUrl, e);
-            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+            throw e;
         }
     }
 
-
+    // --- Your other utility methods (closeConnection, rollbackConnection, etc.) ---
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {
@@ -82,6 +86,7 @@ public class DBUtil {
             }
         }
     }
+
 
     public static void closeResultSet(ResultSet resultSet) {
         if (resultSet != null) {
