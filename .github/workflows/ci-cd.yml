@@ -1,0 +1,180 @@
+# CI/CD Pipeline for the Pahana Edu Billing System
+name: CI/CD Pipeline for Pahana Edu
+
+on:
+  pull_request:
+    branches:
+      - stage
+      - release
+      - main
+  push:
+    branches:
+      - dev
+      - stage
+      - release
+      - main
+
+jobs:
+  #========================================
+  # 1. MERGE VALIDATION JOB
+  #========================================
+  merge-validation:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Branch Flow
+        run: |
+          if [[ "${{ github.base_ref }}" == "main" && "${{ github.head_ref }}" != "release" ]]; then
+            echo "Error: Pull requests to 'main' must come from 'release'."
+            exit 1
+          elif [[ "${{ github.base_ref }}" == "release" && "${{ github.head_ref }}" != "stage" ]]; then
+            echo "Error: Pull requests to 'release' must come from 'stage'."
+            exit 1
+          elif [[ "${{ github.base_ref }}" == "stage" && "${{ github.head_ref }}" != "dev" ]]; then
+            echo "Error: Pull requests to 'stage' must come from 'dev'."
+            exit 1
+          fi
+
+  #========================================
+  # 2. TEST JOB
+  #========================================
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.TEST_DB_NAME }} # Service block creates this empty database
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Initialize Test Database Schema
+        env:
+          DB_USER: ${{ secrets.TEST_DB_USER }}
+          DB_PASS: ${{ secrets.TEST_DB_PASSWORD }}
+          DB_NAME: ${{ secrets.TEST_DB_NAME }}
+        run: |
+          echo "Waiting for MySQL service..."
+          until mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1"; do
+            sleep 2
+          done
+          echo "MySQL is ready. Populating schema..."
+          # ✅ FIX: This command now correctly runs your simplified schema.sql against the database created by the 'services' block.
+          mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" < src/test/resources/schema.sql
+
+      - name: Run All JUnit Tests
+        run: mvn test
+        env:
+          TEST_DB_URL: jdbc:mysql://127.0.0.1:3306/${{ secrets.TEST_DB_NAME }}
+          TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+          TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  #========================================
+  # 3. BUILD JOB
+  #========================================
+  build:
+    runs-on: ubuntu-latest
+    needs: run-tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Archive Build Artifact (.war file)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pahana-edu-package
+          path: target/*.war
+          retention-days: 7
+
+  #========================================
+  # 4. DEPLOYMENT JOBS (Placeholders)
+  #========================================
+  deploy-to-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    environment: development
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pahana-edu-package
+      - name: Deploy to Development
+        run: echo "Deploying to DEVELOPMENT environment..."
+
+  deploy-to-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    environment: staging
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pahana-edu-package
+      - name: Deploy to Staging
+        run: echo "Deploying to STAGING environment..."
+
+  deploy-to-preprod:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/release'
+    environment: preprod
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pahana-edu-package
+      - name: Deploy to Pre-Production
+        run: echo "Deploying to PRE-PRODUCTION environment..."
+
+  deploy-to-production:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pahana-edu-package
+      - name: Deploy to Production
+        run: echo "Deploying to PRODUCTION environment..."

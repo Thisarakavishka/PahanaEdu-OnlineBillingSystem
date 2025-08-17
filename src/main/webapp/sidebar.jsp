@@ -118,11 +118,14 @@
 
         <!-- Logout Button at the bottom -->
         <div class="mt-auto pt-4 border-t border-gray-800">
-            <a class="flex items-center space-x-3 p-3 rounded-lg text-red-400 hover:bg-red-600 hover:text-white font-medium transition duration-200 ease-in-out"
-               href="users?action=index">
-                <i data-feather="log-out" class="w-5 h-5"></i>
-                <span>Logout</span>
-            </a>
+            <form action="users" method="POST">
+                <input type="hidden" name="action" value="logout">
+                <button type="submit"
+                        class="w-full flex items-center space-x-3 p-3 rounded-lg text-red-400 hover:bg-red-600 hover:text-white font-medium transition-colors">
+                    <i data-feather="log-out" class="w-5 h-5"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
     </div>
 </nav>

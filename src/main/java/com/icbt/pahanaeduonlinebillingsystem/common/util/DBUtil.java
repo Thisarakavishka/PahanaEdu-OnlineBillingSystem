@@ -18,30 +18,48 @@ public class DBUtil {
 
     private static final Logger LOGGER = Logger.getLogger(DBUtil.class.getName());
 
-    private static final String USERNAME;
-    private static final String PASSWORD;
-    private static final String URL;
-    private static final String DRIVER;
+    private static final String dbUrl;
+    private static final String dbUsername;
+    private static final String dbPassword;
+    private static final String dbDriver;
 
     static {
-        Properties properties = new Properties();
-        try (InputStream inputStream = DBUtil.class.getClassLoader().getResourceAsStream("db.properties")) {
-            if (inputStream == null) {
-                // Log and throw an exception if the properties file is missing.
-                LOGGER.log(Level.SEVERE, "Missing db.properties file in classpath");
-                throw new PahanaEduOnlineBillingSystemException(ExceptionType.CONFIGURATION_ERROR);
-            }
-            properties.load(inputStream);
-            USERNAME = properties.getProperty("db.username");
-            PASSWORD = properties.getProperty("db.password");
-            URL = properties.getProperty("db.url");
-            DRIVER = properties.getProperty("db.driver");
+        try {
+            // This block makes the utility "CI-aware".
+            // It checks for environment variables set by the GitHub Actions pipeline first.
+            String ciDbUrl = System.getenv("TEST_DB_URL");
+            String ciDbUser = System.getenv("TEST_DB_USER");
+            String ciDbPass = System.getenv("TEST_DB_PASSWORD");
 
-            // Register the JDBC driver.
-            Class.forName(DRIVER);
-            LOGGER.log(Level.INFO, "JDBC driver '" + DRIVER + "' loaded successfully");
+            if (ciDbUrl != null && !ciDbUrl.isEmpty()) {
+                // --- CI/CD Environment ---
+                LOGGER.info("CI environment detected. Using environment variables for database connection.");
+                dbUrl = ciDbUrl;
+                dbUsername = ciDbUser;
+                dbPassword = ciDbPass;
+                dbDriver = "com.mysql.cj.jdbc.Driver"; // Driver is standard for CI
+            } else {
+                // --- Local Development Environment ---
+                LOGGER.info("Local environment detected. Loading from db.properties.");
+                Properties properties = new Properties();
+                try (InputStream inputStream = DBUtil.class.getClassLoader().getResourceAsStream("db.properties")) {
+                    if (inputStream == null) {
+                        throw new PahanaEduOnlineBillingSystemException(ExceptionType.CONFIGURATION_ERROR);
+                    }
+                    properties.load(inputStream);
+                    dbUrl = properties.getProperty("db.url");
+                    dbUsername = properties.getProperty("db.username");
+                    dbPassword = properties.getProperty("db.password");
+                    dbDriver = properties.getProperty("db.driver");
+                }
+            }
+
+            // Register the JDBC driver once
+            Class.forName(dbDriver);
+            LOGGER.info("JDBC driver loaded successfully.");
+
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Database initialization failed. Check db.properties or JDBC driver.", e);
+            LOGGER.log(Level.SEVERE, "Database initialization failed. Check configuration.", e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.CONFIGURATION_ERROR);
         }
     }
@@ -49,28 +67,26 @@ public class DBUtil {
     private DBUtil() {
     }
 
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         try {
-            Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            LOGGER.log(Level.FINE, "Database connection established to URL: " + URL + " successfully");
-            return connection;
+            return DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to database at URL: " + URL, e);
-            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+            LOGGER.log(Level.SEVERE, "Failed to establish database connection to: " + dbUrl, e);
+            throw e;
         }
     }
 
-
+    // --- Your other utility methods (closeConnection, rollbackConnection, etc.) ---
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {
                 connection.close();
-                LOGGER.log(Level.INFO, "Database connection closed successfully");
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to close database connection", e);
             }
         }
     }
+
 
     public static void closeResultSet(ResultSet resultSet) {
         if (resultSet != null) {
