@@ -5,6 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBil
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.ServletUtil;
+import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
@@ -40,25 +41,6 @@ public class UserServlet extends HttpServlet {
         userService = new UserServiceImpl();
     }
 
-
-    // Helper to convert UserDTO to a Map for JSON serialization
-    // Now accepts optional username parameters for audit fields
-    private Map<String, Object> userDtoToMap(UserDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
-        if (dto == null) return null;
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", dto.getId());
-        map.put("username", dto.getUsername());
-        map.put("role", dto.getRole().name()); // Send role as String
-        // Use provided usernames, fallback to ID if username not found, or '-' if null
-        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
-        map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
-        map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
-        map.put("deletedAt", dto.getDeletedAt());
-        return map;
-    }
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
@@ -92,7 +74,7 @@ public class UserServlet extends HttpServlet {
                 if (isAdded) {
                     // Fetch the newly added user to get its ID and audit timestamps
                     UserDTO addedUser = userService.searchByUsername(dto.getUsername());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", userDtoToMap(addedUser, null, null, null)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", UserMapper.toMap(addedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User addition failed unexpectedly."));
                 }
@@ -210,7 +192,7 @@ public class UserServlet extends HttpServlet {
                             .map(user -> {
                                 // For list view, we don't fetch createdBy/updatedBy usernames for every user
                                 // to avoid N+1 query problem. Frontend can display IDs or '-'
-                                return userDtoToMap(user, null, null, null);
+                                return UserMapper.toMap(user, null, null, null);
                             })
                             .collect(Collectors.toList());
                     SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userMaps);
@@ -264,7 +246,7 @@ public class UserServlet extends HttpServlet {
                             if (deleter != null) deletedByUsername = deleter.getUsername();
                         }
 
-                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userDtoToMap(user, createdByUsername, updatedByUsername, deletedByUsername));
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, UserMapper.toMap(user, createdByUsername, updatedByUsername, deletedByUsername));
                     } else {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_NOT_FOUND, Map.of("message", "User not found."));
                     }
@@ -352,7 +334,7 @@ public class UserServlet extends HttpServlet {
                 boolean isUpdated = userService.update(dto);
                 if (isUpdated) {
                     UserDTO updatedUser = userService.searchById(dto.getId());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", userDtoToMap(updatedUser, null, null, null)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", UserMapper.toMap(updatedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User update failed unexpectedly."));
                 }

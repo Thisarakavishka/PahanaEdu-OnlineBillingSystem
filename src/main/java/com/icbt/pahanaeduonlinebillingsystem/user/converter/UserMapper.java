@@ -1,17 +1,22 @@
 package com.icbt.pahanaeduonlinebillingsystem.user.converter;
 
+import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.user.entity.UserEntity;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Thisara Kavishka
  * @date 2025-07-30
  * @since 1.0
  */
-public class UserConverter {
+public class UserMapper {
 
     public static UserEntity toEntity(UserDTO userDTO) {
 
@@ -67,5 +72,39 @@ public class UserConverter {
             }
         }
         return dtos;
+    }
+
+    public static Map<String, Object> toMap(UserDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
+        if (dto == null) return null;
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", dto.getId());
+        map.put("username", dto.getUsername());
+        map.put("role", dto.getRole().name()); // Send role as String
+        // Use provided usernames, fallback to ID if username not found, or '-' if null
+        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
+        map.put("createdAt", dto.getCreatedAt());
+        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
+        map.put("updatedAt", dto.getUpdatedAt());
+        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
+        map.put("deletedAt", dto.getDeletedAt());
+        return map;
+    }
+
+    public static UserEntity mapResultSetToUserEntity(ResultSet rs) throws SQLException {
+        UserEntity user = new UserEntity();
+        user.setId(rs.getInt("id"));
+        user.setUsername(rs.getString("username"));
+        user.setPassword(rs.getString("password")); // Hashed password
+        user.setSalt(rs.getString("salt"));
+        user.setRole(Role.valueOf(rs.getString("role"))); // Convert String to Enum
+
+        // Audit fields
+        user.setCreatedBy(rs.getObject("created_by", Integer.class)); // Handles NULL
+        user.setCreatedAt(rs.getTimestamp("created_at"));
+        user.setUpdatedBy(rs.getObject("updated_by", Integer.class));
+        user.setUpdatedAt(rs.getTimestamp("updated_at"));
+        user.setDeletedBy(rs.getObject("deleted_by", Integer.class));
+        user.setDeletedAt(rs.getTimestamp("deleted_at"));
+        return user;
     }
 }
