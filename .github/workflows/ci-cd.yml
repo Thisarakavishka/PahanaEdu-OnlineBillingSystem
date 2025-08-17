@@ -18,7 +18,7 @@ on:
 
 jobs:
   #========================================
-  # 1. MERGE VALIDATION JOB (Streamlined)
+  # 1. MERGE VALIDATION JOB
   #========================================
   merge-validation:
     runs-on: ubuntu-latest
@@ -75,24 +75,23 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Initialize Test Database Schema
-        # ✅ FIX: Secrets are now set as environment variables for this step
         env:
           DB_USER: ${{ secrets.TEST_DB_USER }}
           DB_PASS: ${{ secrets.TEST_DB_PASSWORD }}
           DB_NAME: ${{ secrets.TEST_DB_NAME }}
         run: |
           echo "Waiting for MySQL service..."
-          # Use the env variables in the command
           until mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1"; do
             sleep 2
           done
           echo "MySQL is ready. Initializing schema..."
-          mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < src/test/resources/schema.sql
+          # ✅ FIX: Use the -D flag to explicitly specify the database for the script.
+          mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" < src/test/resources/schema.sql
 
       - name: Run All JUnit Tests
         run: mvn test
         env:
-          # Pass database credentials to the test environment so DBUtil can use them
+          # Pass the credentials to the test environment so the updated DBUtil can read them
           TEST_DB_URL: jdbc:mysql://127.0.0.1:3306/${{ secrets.TEST_DB_NAME }}
           TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
           TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
