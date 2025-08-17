@@ -1,14 +1,5 @@
--- This schema is used by the CI/CD pipeline to set up the test database.
-
--- Drop if exists and recreate if not exists database
-DROP
-DATABASE IF EXISTS `PahanaEdu_OnlineBillingSystem_Test`;
-CREATE
-DATABASE IF NOT EXISTS `PahanaEdu_OnlineBillingSystem_Test`;
-
--- Use Database
-USE
-`PahanaEdu_OnlineBillingSystem_Test`;
+-- Pahana Edu Test Schema
+-- This script assumes the database has already been created and selected by the CI pipeline.
 
 -- Users Table
 CREATE TABLE users

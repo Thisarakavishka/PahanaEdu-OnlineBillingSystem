@@ -47,8 +47,8 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          # We only set the root password here. The database will be created in the script.
           MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.TEST_DB_NAME }} # Service block creates this empty database
         ports:
           - 3306:3306
         options: >-
@@ -81,18 +81,13 @@ jobs:
           until mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1"; do
             sleep 2
           done
-          echo "MySQL is ready."
-          
-          # ✅ FIX: Create the database first, then run the schema script against it.
-          echo "Creating database..."
-          mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` ;"
-          echo "Initializing schema..."
+          echo "MySQL is ready. Populating schema..."
+          # ✅ FIX: This command now correctly runs your simplified schema.sql against the database created by the 'services' block.
           mysql -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" < src/test/resources/schema.sql
 
       - name: Run All JUnit Tests
         run: mvn test
         env:
-          # Pass credentials to the test environment for the updated DBUtil
           TEST_DB_URL: jdbc:mysql://127.0.0.1:3306/${{ secrets.TEST_DB_NAME }}
           TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
           TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
