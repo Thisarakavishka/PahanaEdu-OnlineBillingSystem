@@ -4,6 +4,9 @@ import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.ServletUtil;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.Validator;
+import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
@@ -14,11 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,82 +35,21 @@ public class UserServlet extends HttpServlet {
 
     private UserService userService;
     private static final Logger LOGGER = LogUtil.getLogger(UserServlet.class);
-    private static final int INITIAL_ADMIN_ID = 1; // Constant for the initial admin's ID
+    private static final int INITIAL_ADMIN_ID = 1;
 
     @Override
     public void init() {
         userService = new UserServiceImpl();
     }
 
-    // Helper to get userId from session
-    private Integer getUserIdFromSession(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("userId") != null) {
-            return (Integer) session.getAttribute("userId");
-        }
-        return null;
-    }
-
-    // Helper to get user role from session
-    private String getUserRoleFromSession(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("role") != null) {
-            return (String) session.getAttribute("role");
-        }
-        return null;
-    }
-
-    // Helper to convert UserDTO to a Map for JSON serialization
-    // Now accepts optional username parameters for audit fields
-    private Map<String, Object> userDtoToMap(UserDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
-        if (dto == null) return null;
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", dto.getId());
-        map.put("username", dto.getUsername());
-        map.put("role", dto.getRole().name()); // Send role as String
-        // Use provided usernames, fallback to ID if username not found, or '-' if null
-        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
-        map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
-        map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
-        map.put("deletedAt", dto.getDeletedAt());
-        return map;
-    }
-
-    // Helper to parse x-www-form-urlencoded body for POST/PUT
-    private Map<String, String> parseUrlEncodedBody(HttpServletRequest req) throws IOException {
-        Map<String, String> params = new HashMap<>();
-        try (BufferedReader reader = req.getReader()) {
-            String body = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            if (body != null && !body.isEmpty()) {
-                Arrays.stream(body.split("&"))
-                        .forEach(pair -> {
-                            String[] keyValue = pair.split("=");
-                            if (keyValue.length == 2) {
-                                try {
-                                    params.put(URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8.name()),
-                                            URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8.name()));
-                                } catch (Exception e) {
-                                    LOGGER.log(Level.WARNING, "Error decoding URL-encoded parameter: " + e.getMessage());
-                                }
-                            }
-                        });
-            }
-        }
-        return params;
-    }
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // For POST, parameters are usually from form submission (req.getParameter)
-        // We'll rely on the 'action' parameter to distinguish login from add user.
         String action = req.getParameter("action");
 
         if ("add".equals(action)) {
             // Handle Add User
-            Integer currentUserId = getUserIdFromSession(req);
-            String currentUserRole = getUserRoleFromSession(req);
+            Integer currentUserId = ServletUtil.getUserIdFromSession(req);
+            String currentUserRole = ServletUtil.getUserRoleFromSession(req);
 
             if (currentUserId == null || !"ADMIN".equals(currentUserRole)) {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Only admins can add users."));
@@ -125,19 +63,17 @@ public class UserServlet extends HttpServlet {
                 dto.setRole(Role.valueOf(req.getParameter("role").toUpperCase()));
                 dto.setCreatedBy(currentUserId);
 
-                // Basic validation (more comprehensive validation is in frontend and service)
-                if (dto.getUsername() == null || dto.getUsername().trim().isEmpty() ||
-                        dto.getPassword() == null || dto.getPassword().trim().isEmpty() || // Password is required for add
-                        dto.getRole() == null) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Missing required user fields (username, password, role)."));
+                Map<String, String> errors = Validator.userValidate(dto);
+                if (!errors.isEmpty()) {
+                    LOGGER.log(Level.WARNING, "User validation failed: " + errors);
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid user data provided.", "errors", errors));
                     return;
                 }
 
                 boolean isAdded = userService.add(dto);
                 if (isAdded) {
-                    // Fetch the newly added user to get its ID and audit timestamps
                     UserDTO addedUser = userService.searchByUsername(dto.getUsername());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", userDtoToMap(addedUser, null, null, null)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", UserMapper.toMap(addedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User addition failed unexpectedly."));
                 }
@@ -166,8 +102,15 @@ public class UserServlet extends HttpServlet {
                 LOGGER.log(Level.SEVERE, "Unexpected error during POST /users (add user): " + e.getMessage(), e);
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Internal server error during user addition."));
             }
+        } else if ("logout".equals(action)) {
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                String username = (String) session.getAttribute("username");
+                session.invalidate();
+                LOGGER.log(Level.INFO, "User '" + username + "' logged out successfully.");
+            }
+            resp.sendRedirect(req.getContextPath() + "/index.jsp");
         } else {
-            // Handle Login (original doPost logic)
             String username = req.getParameter("username");
             String password = req.getParameter("password");
 
@@ -190,14 +133,14 @@ public class UserServlet extends HttpServlet {
             } catch (PahanaEduOnlineBillingSystemException e) {
                 LOGGER.log(Level.WARNING, "Login attempt failed for username: " + username + " - " + e.getExceptionType().name() + ": " + e.getMessage());
                 String errorMessage;
-                int statusCode = HttpServletResponse.SC_BAD_REQUEST; // Default for business errors
+                int statusCode = HttpServletResponse.SC_BAD_REQUEST;
                 switch (e.getExceptionType()) {
                     case INVALID_CREDENTIALS:
                         errorMessage = "Invalid username or password.";
                         break;
                     case USER_NOT_FOUND:
                         errorMessage = "User not found.";
-                        statusCode = HttpServletResponse.SC_NOT_FOUND; // More appropriate for not found
+                        statusCode = HttpServletResponse.SC_NOT_FOUND;
                         break;
                     case DATABASE_ERROR:
                         errorMessage = "A database error occurred. Please try again later.";
@@ -220,8 +163,9 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req); // FIX: Initialize currentUserId here
+
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
 
         if (action == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Action parameter is missing."));
@@ -229,21 +173,8 @@ public class UserServlet extends HttpServlet {
         }
 
         switch (action) {
-            case "logout":
-                HttpSession session = req.getSession(false);
-                if (session != null) {
-                    String username = (String) session.getAttribute("username");
-                    session.invalidate(); // clear current session
-                    LOGGER.log(Level.INFO, "User '" + username + "' logged out successfully.");
-                }
-                resp.sendRedirect(req.getContextPath() + "/index.jsp"); // Corrected context path usage
-                break;
-
             case "list":
-                // Users with role "USER" should only see their own row, not the full list.
-                // This is handled in the frontend's renderUsers function.
-                // Backend still provides all data for ADMIN to filter.
-                if (!"ADMIN".equals(currentUserRole) && !"USER".equals(currentUserRole)) { // Only ADMIN and USER roles can list (USER will filter on frontend)
+                if (!"ADMIN".equals(currentUserRole) && !"USER".equals(currentUserRole)) {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: You do not have permission to view users."));
                     return;
                 }
@@ -256,9 +187,7 @@ public class UserServlet extends HttpServlet {
                     List<UserDTO> users = userService.getAll(searchParams);
                     List<Map<String, Object>> userMaps = users.stream()
                             .map(user -> {
-                                // For list view, we don't fetch createdBy/updatedBy usernames for every user
-                                // to avoid N+1 query problem. Frontend can display IDs or '-'
-                                return userDtoToMap(user, null, null, null);
+                                return UserMapper.toMap(user, null, null, null);
                             })
                             .collect(Collectors.toList());
                     SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userMaps);
@@ -272,8 +201,6 @@ public class UserServlet extends HttpServlet {
                 break;
 
             case "searchById":
-                // All roles can view their own details. Admins can view any.
-                // Backend needs to verify if the requested ID matches current user ID if role is USER.
                 if (currentUserId == null) {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
                     return;
@@ -286,7 +213,6 @@ public class UserServlet extends HttpServlet {
                     }
                     Integer userIdToSearch = Integer.parseInt(idStr);
 
-                    // Authorization check for searchById
                     if ("USER".equals(currentUserRole) && !userIdToSearch.equals(currentUserId)) {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Users can only view their own profile."));
                         return;
@@ -294,7 +220,6 @@ public class UserServlet extends HttpServlet {
 
                     UserDTO user = userService.searchById(userIdToSearch);
                     if (user != null) {
-                        // Fetch usernames for audit fields for single view
                         String createdByUsername = null;
                         String updatedByUsername = null;
                         String deletedByUsername = null;
@@ -312,7 +237,7 @@ public class UserServlet extends HttpServlet {
                             if (deleter != null) deletedByUsername = deleter.getUsername();
                         }
 
-                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, userDtoToMap(user, createdByUsername, updatedByUsername, deletedByUsername));
+                        SendResponse.sendJson(resp, HttpServletResponse.SC_OK, UserMapper.toMap(user, createdByUsername, updatedByUsername, deletedByUsername));
                     } else {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_NOT_FOUND, Map.of("message", "User not found."));
                     }
@@ -336,11 +261,11 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Map<String, String> requestBodyParams = parseUrlEncodedBody(req);
+        Map<String, String> requestBodyParams = ServletUtil.parseUrlEncodedBody(req);
         String action = requestBodyParams.get("action");
 
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req);
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
 
         if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
@@ -400,7 +325,7 @@ public class UserServlet extends HttpServlet {
                 boolean isUpdated = userService.update(dto);
                 if (isUpdated) {
                     UserDTO updatedUser = userService.searchById(dto.getId());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", userDtoToMap(updatedUser, null, null, null)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "User updated successfully", "user", UserMapper.toMap(updatedUser, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "User update failed unexpectedly."));
                 }
@@ -448,8 +373,9 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req);
+
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
 
         if (currentUserId == null) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
