@@ -29,15 +29,14 @@ public class AppInitializer implements ServletContextListener {
         userService = new UserServiceImpl();
 
         try {
-            // Check if any users exist in the database and passing null to getAll() to get non deleted users
             if (userService.getAll(null).isEmpty()) {
                 LOGGER.log(Level.INFO, "No users found. Creating initial admin user...");
 
                 UserDTO adminUser = new UserDTO();
-                adminUser.setUsername("admin");
-                adminUser.setPassword("admin123"); // Default password for initial setup
+                adminUser.setUsername("super admin");
+                adminUser.setPassword("superadmin123");
                 adminUser.setRole(Role.ADMIN);
-                adminUser.setCreatedBy(null); // No user created this initial admin
+                adminUser.setCreatedBy(null);
 
                 boolean isAddAdminUser = userService.add(adminUser);
                 if (isAddAdminUser) {
