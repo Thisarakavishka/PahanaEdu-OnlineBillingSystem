@@ -5,6 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBil
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.ServletUtil;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.Validator;
 import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
@@ -62,17 +63,15 @@ public class UserServlet extends HttpServlet {
                 dto.setRole(Role.valueOf(req.getParameter("role").toUpperCase()));
                 dto.setCreatedBy(currentUserId);
 
-                // Basic validation (more comprehensive validation is in frontend and service)
-                if (dto.getUsername() == null || dto.getUsername().trim().isEmpty() ||
-                        dto.getPassword() == null || dto.getPassword().trim().isEmpty() || // Password is required for add
-                        dto.getRole() == null) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Missing required user fields (username, password, role)."));
+                Map<String, String> errors = Validator.userValidate(dto);
+                if (!errors.isEmpty()) {
+                    LOGGER.log(Level.WARNING, "User validation failed: " + errors);
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid user data provided.", "errors", errors));
                     return;
                 }
 
                 boolean isAdded = userService.add(dto);
                 if (isAdded) {
-                    // Fetch the newly added user to get its ID and audit timestamps
                     UserDTO addedUser = userService.searchByUsername(dto.getUsername());
                     SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "User added successfully", "user", UserMapper.toMap(addedUser, null, null, null)));
                 } else {
@@ -110,10 +109,8 @@ public class UserServlet extends HttpServlet {
                 session.invalidate();
                 LOGGER.log(Level.INFO, "User '" + username + "' logged out successfully.");
             }
-            // Redirect to the login page
             resp.sendRedirect(req.getContextPath() + "/index.jsp");
         } else {
-            // Handle Login (original doPost logic)
             String username = req.getParameter("username");
             String password = req.getParameter("password");
 
@@ -136,14 +133,14 @@ public class UserServlet extends HttpServlet {
             } catch (PahanaEduOnlineBillingSystemException e) {
                 LOGGER.log(Level.WARNING, "Login attempt failed for username: " + username + " - " + e.getExceptionType().name() + ": " + e.getMessage());
                 String errorMessage;
-                int statusCode = HttpServletResponse.SC_BAD_REQUEST; // Default for business errors
+                int statusCode = HttpServletResponse.SC_BAD_REQUEST;
                 switch (e.getExceptionType()) {
                     case INVALID_CREDENTIALS:
                         errorMessage = "Invalid username or password.";
                         break;
                     case USER_NOT_FOUND:
                         errorMessage = "User not found.";
-                        statusCode = HttpServletResponse.SC_NOT_FOUND; // More appropriate for not found
+                        statusCode = HttpServletResponse.SC_NOT_FOUND;
                         break;
                     case DATABASE_ERROR:
                         errorMessage = "A database error occurred. Please try again later.";
@@ -190,8 +187,6 @@ public class UserServlet extends HttpServlet {
                     List<UserDTO> users = userService.getAll(searchParams);
                     List<Map<String, Object>> userMaps = users.stream()
                             .map(user -> {
-                                // For list view, we don't fetch createdBy/updatedBy usernames for every user
-                                // to avoid N+1 query problem. Frontend can display IDs or '-'
                                 return UserMapper.toMap(user, null, null, null);
                             })
                             .collect(Collectors.toList());
@@ -206,8 +201,6 @@ public class UserServlet extends HttpServlet {
                 break;
 
             case "searchById":
-                // All roles can view their own details. Admins can view any.
-                // Backend needs to verify if the requested ID matches current user ID if role is USER.
                 if (currentUserId == null) {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_UNAUTHORIZED, Map.of("message", "Unauthorized: Please log in."));
                     return;
@@ -220,7 +213,6 @@ public class UserServlet extends HttpServlet {
                     }
                     Integer userIdToSearch = Integer.parseInt(idStr);
 
-                    // Authorization check for searchById
                     if ("USER".equals(currentUserRole) && !userIdToSearch.equals(currentUserId)) {
                         SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Forbidden: Users can only view their own profile."));
                         return;
@@ -228,7 +220,6 @@ public class UserServlet extends HttpServlet {
 
                     UserDTO user = userService.searchById(userIdToSearch);
                     if (user != null) {
-                        // Fetch usernames for audit fields for single view
                         String createdByUsername = null;
                         String updatedByUsername = null;
                         String deletedByUsername = null;
