@@ -5,6 +5,8 @@ import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDetailDTO;
 import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillDetailEntity;
 import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillEntity;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -157,4 +159,33 @@ public class BillMapper {
         }
         return map;
     }
+
+    public static BillEntity mapResultSetToBillEntity(ResultSet resultSet) throws SQLException {
+        BillEntity entity = new BillEntity();
+        entity.setId(resultSet.getInt("id"));
+        entity.setCustomerId(resultSet.getInt("customer_id"));
+        entity.setTotalAmount(resultSet.getBigDecimal("total_amount"));
+        entity.setCreatedBy(resultSet.getObject("created_by", Integer.class));
+        entity.setCreatedAt(resultSet.getTimestamp("created_at"));
+        entity.setDeletedBy(resultSet.getObject("deleted_by", Integer.class));
+        entity.setDeletedAt(resultSet.getTimestamp("deleted_at"));
+        return entity;
+    }
+
+    public static BillDetailEntity mapResultSetToBillDetailEntity(ResultSet resultSet) throws SQLException {
+        BillDetailEntity entity = new BillDetailEntity();
+        entity.setId(resultSet.getInt("id"));
+        entity.setBillId(resultSet.getInt("bill_id"));
+        entity.setItemId(resultSet.getInt("item_id"));
+        entity.setItemNameAtSale(resultSet.getString("item_name_at_sale"));
+        entity.setUnitPriceAtSale(resultSet.getBigDecimal("unit_price_at_sale"));
+        entity.setUnits(resultSet.getInt("units"));
+        entity.setTotal(resultSet.getBigDecimal("total"));
+        entity.setCreatedBy(resultSet.getObject("created_by", Integer.class));
+        entity.setCreatedAt(resultSet.getTimestamp("created_at"));
+        entity.setDeletedBy(resultSet.getObject("deleted_by", Integer.class));
+        entity.setDeletedAt(resultSet.getTimestamp("deleted_at"));
+        return entity;
+    }
+
 }

@@ -7,6 +7,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.item.dao.ItemDAO;
 import com.icbt.pahanaeduonlinebillingsystem.item.entity.ItemEntity;
+import com.icbt.pahanaeduonlinebillingsystem.item.mapper.ItemMapper;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -58,7 +59,7 @@ public class ItemDAOImpl implements ItemDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, name);
             if (resultSet.next()) {
-                return mapResultSetToItemEntity(resultSet);
+                return ItemMapper.mapResultSetToItemEntity(resultSet);
             }
             return null;
         } finally {
@@ -146,7 +147,7 @@ public class ItemDAOImpl implements ItemDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, itemId);
             if (resultSet.next()) {
-                return mapResultSetToItemEntity(resultSet);
+                return ItemMapper.mapResultSetToItemEntity(resultSet);
             }
             return null;
         } finally {
@@ -179,7 +180,7 @@ public class ItemDAOImpl implements ItemDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sqlBuilder.toString(), params.toArray());
             while (resultSet.next()) {
-                items.add(mapResultSetToItemEntity(resultSet));
+                items.add(ItemMapper.mapResultSetToItemEntity(resultSet));
             }
         } finally {
             DBUtil.closeResultSet(resultSet);
@@ -187,20 +188,5 @@ public class ItemDAOImpl implements ItemDAO {
         return items;
     }
 
-    private ItemEntity mapResultSetToItemEntity(ResultSet resultSet) throws SQLException {
-        ItemEntity entity = new ItemEntity();
-        entity.setId(resultSet.getInt("id"));
-        entity.setName(resultSet.getString("name"));
-        entity.setUnitPrice(resultSet.getBigDecimal("unit_price"));
-        entity.setStockQuantity(resultSet.getInt("stock_quantity"));
 
-        // Audit fields
-        entity.setCreatedBy(resultSet.getObject("created_by", Integer.class));
-        entity.setCreatedAt(resultSet.getTimestamp("created_at"));
-        entity.setUpdatedBy(resultSet.getObject("updated_by", Integer.class));
-        entity.setUpdatedAt(resultSet.getTimestamp("updated_at"));
-        entity.setDeletedBy(resultSet.getObject("deleted_by", Integer.class));
-        entity.setDeletedAt(resultSet.getTimestamp("deleted_at"));
-        return entity;
-    }
 }
