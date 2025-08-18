@@ -1,10 +1,10 @@
 package com.icbt.pahanaeduonlinebillingsystem.user.dao.impl;
 
-import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
+import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dao.UserDAO;
 import com.icbt.pahanaeduonlinebillingsystem.user.entity.UserEntity;
 
@@ -34,7 +34,7 @@ public class UserDAOImpl implements UserDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, username);
             if (resultSet.next()) {
-                return mapResultSetToUserEntity(resultSet);
+                return UserMapper.mapResultSetToUserEntity(resultSet);
             }
             return null;
         } finally {
@@ -129,7 +129,7 @@ public class UserDAOImpl implements UserDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, userId);
             if (resultSet.next()) {
-                return mapResultSetToUserEntity(resultSet);
+                return UserMapper.mapResultSetToUserEntity(resultSet);
             }
             return null;
         } finally {
@@ -168,7 +168,7 @@ public class UserDAOImpl implements UserDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sqlBuilder.toString(), params.toArray());
             while (resultSet.next()) {
-                users.add(mapResultSetToUserEntity(resultSet));
+                users.add(UserMapper.mapResultSetToUserEntity(resultSet));
             }
         } finally {
             DBUtil.closeResultSet(resultSet);
@@ -176,21 +176,4 @@ public class UserDAOImpl implements UserDAO {
         return users;
     }
 
-    private UserEntity mapResultSetToUserEntity(ResultSet rs) throws SQLException {
-        UserEntity user = new UserEntity();
-        user.setId(rs.getInt("id"));
-        user.setUsername(rs.getString("username"));
-        user.setPassword(rs.getString("password")); // Hashed password
-        user.setSalt(rs.getString("salt"));
-        user.setRole(Role.valueOf(rs.getString("role"))); // Convert String to Enum
-
-        // Audit fields
-        user.setCreatedBy(rs.getObject("created_by", Integer.class)); // Handles NULL
-        user.setCreatedAt(rs.getTimestamp("created_at"));
-        user.setUpdatedBy(rs.getObject("updated_by", Integer.class));
-        user.setUpdatedAt(rs.getTimestamp("updated_at"));
-        user.setDeletedBy(rs.getObject("deleted_by", Integer.class));
-        user.setDeletedAt(rs.getTimestamp("deleted_at"));
-        return user;
-    }
 }
