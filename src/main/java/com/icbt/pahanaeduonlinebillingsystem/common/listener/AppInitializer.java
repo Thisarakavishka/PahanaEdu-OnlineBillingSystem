@@ -2,6 +2,7 @@ package com.icbt.pahanaeduonlinebillingsystem.common.listener;
 
 import com.icbt.pahanaeduonlinebillingsystem.common.constant.Role;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
@@ -9,6 +10,8 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +33,19 @@ public class AppInitializer implements ServletContextListener {
 
         try {
             if (userService.getAll(null).isEmpty()) {
-                LOGGER.log(Level.INFO, "No users found. Creating initial admin user...");
+                LOGGER.log(Level.INFO, "No users found. Preparing to create initial admin user...");
+
+                try (Connection connection = DBUtil.getConnection();
+                     Statement statement = connection.createStatement()) {
+
+                    String resetSQL = "ALTER TABLE users AUTO_INCREMENT = 1";
+                    statement.executeUpdate(resetSQL);
+                    LOGGER.log(Level.INFO, "AUTO_INCREMENT for 'users' table has been reset to 1.");
+
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Failed to reset AUTO_INCREMENT for users table.", e);
+                    throw new RuntimeException("Failed to prepare database for initial user.", e);
+                }
 
                 UserDTO adminUser = new UserDTO();
                 adminUser.setUsername("super admin");
@@ -40,9 +55,9 @@ public class AppInitializer implements ServletContextListener {
 
                 boolean isAddAdminUser = userService.add(adminUser);
                 if (isAddAdminUser) {
-                    LOGGER.log(Level.INFO, "Initial admin user 'admin' created successfully!");
+                    LOGGER.log(Level.INFO, "Initial admin user 'super admin' created successfully with ID=1!");
                 } else {
-                    LOGGER.log(Level.SEVERE, "Failed to create initial admin user 'admin'.");
+                    LOGGER.log(Level.SEVERE, "Failed to create initial admin user.");
                 }
             } else {
                 LOGGER.log(Level.INFO, "Users already exist. Skipping initial admin user creation.");
