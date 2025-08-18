@@ -2,6 +2,7 @@ package com.icbt.pahanaeduonlinebillingsystem.bill.dao.impl;
 
 import com.icbt.pahanaeduonlinebillingsystem.bill.dao.BillDAO;
 import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillEntity;
+import com.icbt.pahanaeduonlinebillingsystem.bill.mapper.BillMapper;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
@@ -98,7 +99,7 @@ public class BillDAOImpl implements BillDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, billId);
             if (resultSet.next()) {
-                return mapResultSetToBillEntity(resultSet);
+                return BillMapper.mapResultSetToBillEntity(resultSet);
             }
             return null;
         } finally {
@@ -124,23 +125,11 @@ public class BillDAOImpl implements BillDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sqlBuilder.toString(), params.toArray());
             while (resultSet.next()) {
-                bills.add(mapResultSetToBillEntity(resultSet));
+                bills.add(BillMapper.mapResultSetToBillEntity(resultSet));
             }
         } finally {
             DBUtil.closeResultSet(resultSet);
         }
         return bills;
-    }
-
-    private BillEntity mapResultSetToBillEntity(ResultSet resultSet) throws SQLException {
-        BillEntity entity = new BillEntity();
-        entity.setId(resultSet.getInt("id"));
-        entity.setCustomerId(resultSet.getInt("customer_id"));
-        entity.setTotalAmount(resultSet.getBigDecimal("total_amount"));
-        entity.setCreatedBy(resultSet.getObject("created_by", Integer.class));
-        entity.setCreatedAt(resultSet.getTimestamp("created_at"));
-        entity.setDeletedBy(resultSet.getObject("deleted_by", Integer.class));
-        entity.setDeletedAt(resultSet.getTimestamp("deleted_at"));
-        return entity;
     }
 }

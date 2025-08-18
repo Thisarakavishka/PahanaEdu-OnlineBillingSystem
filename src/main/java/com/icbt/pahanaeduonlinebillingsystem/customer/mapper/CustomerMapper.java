@@ -3,6 +3,8 @@ package com.icbt.pahanaeduonlinebillingsystem.customer.mapper;
 import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,5 +93,24 @@ public class CustomerMapper {
         map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
 
         return map;
+    }
+
+
+    public static CustomerEntity mapResultSetToCustomerEntity(ResultSet rs) throws SQLException {
+        CustomerEntity entity = new CustomerEntity();
+        entity.setId(rs.getInt("id"));
+        entity.setAccountNumber(rs.getString("account_number"));
+        entity.setName(rs.getString("name"));
+        entity.setAddress(rs.getString("address"));
+        entity.setPhone(rs.getString("phone"));
+        entity.setUnitsConsumed(rs.getInt("units_consumed"));
+
+        entity.setCreatedBy(rs.getObject("created_by", Integer.class));
+        entity.setCreatedAt(rs.getTimestamp("created_at"));
+        entity.setUpdatedBy(rs.getObject("updated_by", Integer.class));
+        entity.setUpdatedAt(rs.getTimestamp("updated_at"));
+        entity.setDeletedBy(rs.getObject("deleted_by", Integer.class));
+        entity.setDeletedAt(rs.getTimestamp("deleted_at"));
+        return entity;
     }
 }

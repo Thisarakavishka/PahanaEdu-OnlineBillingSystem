@@ -7,6 +7,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.customer.dao.CustomerDAO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
+import com.icbt.pahanaeduonlinebillingsystem.customer.mapper.CustomerMapper;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -95,7 +96,7 @@ public class CustomerDAOImpl implements CustomerDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, id);
             if (resultSet.next()) {
-                return mapResultSetToCustomerEntity(resultSet);
+                return CustomerMapper.mapResultSetToCustomerEntity(resultSet);
             }
             return null;
         } finally {
@@ -137,7 +138,7 @@ public class CustomerDAOImpl implements CustomerDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sqlBuilder.toString(), params.toArray());
             while (resultSet.next()) {
-                customerEntities.add(mapResultSetToCustomerEntity(resultSet));
+                customerEntities.add(CustomerMapper.mapResultSetToCustomerEntity(resultSet));
             }
         } finally {
             DBUtil.closeResultSet(resultSet);
@@ -191,7 +192,7 @@ public class CustomerDAOImpl implements CustomerDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, accountNumber);
             if (resultSet.next()) {
-                return mapResultSetToCustomerEntity(resultSet);
+                return CustomerMapper.mapResultSetToCustomerEntity(resultSet);
             }
             return null;
         } finally {
@@ -206,7 +207,7 @@ public class CustomerDAOImpl implements CustomerDAO {
         try {
             resultSet = DAOUtil.executeQuery(connection, sql, phone);
             if (resultSet.next()) {
-                return mapResultSetToCustomerEntity(resultSet);
+                return CustomerMapper.mapResultSetToCustomerEntity(resultSet);
             }
             return null;
         } finally {
@@ -214,21 +215,4 @@ public class CustomerDAOImpl implements CustomerDAO {
         }
     }
 
-    private CustomerEntity mapResultSetToCustomerEntity(ResultSet rs) throws SQLException {
-        CustomerEntity entity = new CustomerEntity();
-        entity.setId(rs.getInt("id"));
-        entity.setAccountNumber(rs.getString("account_number"));
-        entity.setName(rs.getString("name"));
-        entity.setAddress(rs.getString("address"));
-        entity.setPhone(rs.getString("phone"));
-        entity.setUnitsConsumed(rs.getInt("units_consumed"));
-
-        entity.setCreatedBy(rs.getObject("created_by", Integer.class));
-        entity.setCreatedAt(rs.getTimestamp("created_at"));
-        entity.setUpdatedBy(rs.getObject("updated_by", Integer.class));
-        entity.setUpdatedAt(rs.getTimestamp("updated_at"));
-        entity.setDeletedBy(rs.getObject("deleted_by", Integer.class));
-        entity.setDeletedAt(rs.getTimestamp("deleted_at"));
-        return entity;
-    }
 }

@@ -4,7 +4,7 @@ import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
-import com.icbt.pahanaeduonlinebillingsystem.item.converter.ItemConverter;
+import com.icbt.pahanaeduonlinebillingsystem.item.mapper.ItemMapper;
 import com.icbt.pahanaeduonlinebillingsystem.item.dao.ItemDAO;
 import com.icbt.pahanaeduonlinebillingsystem.item.dao.impl.ItemDAOImpl;
 import com.icbt.pahanaeduonlinebillingsystem.item.dto.ItemDTO;
@@ -37,7 +37,7 @@ public class ItemServiceImpl implements ItemService {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false); // Start transaction
+            connection.setAutoCommit(false);
 
             LOGGER.log(Level.INFO, "Attempting to add item: " + dto.getName());
 
@@ -45,15 +45,15 @@ public class ItemServiceImpl implements ItemService {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_ALREADY_EXISTS);
             }
 
-            ItemEntity itemEntity = ItemConverter.toEntity(dto);
+            ItemEntity itemEntity = ItemMapper.toEntity(dto);
             boolean isAdded = itemDAO.add(connection, itemEntity);
 
             if (isAdded) {
-                connection.commit(); // Commit transaction
+                connection.commit();
                 LOGGER.log(Level.INFO, "Item added successfully: " + dto.getName());
                 return true;
             } else {
-                connection.rollback(); // Rollback on failure
+                connection.rollback();
                 LOGGER.log(Level.WARNING, "Failed to add item: " + dto.getName() + ", rolling back.");
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_CREATION_FAILED);
             }
@@ -71,7 +71,7 @@ public class ItemServiceImpl implements ItemService {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false); // Start transaction
+            connection.setAutoCommit(false);
 
             LOGGER.log(Level.INFO, "Attempting to update item: " + dto.getName() + " (ID: " + dto.getId() + ")");
 
@@ -80,22 +80,21 @@ public class ItemServiceImpl implements ItemService {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_NOT_FOUND);
             }
 
-            // If name is changed, ensure it's unique (excluding the current item)
             if (!existingItem.getName().equals(dto.getName())) {
                 if (itemDAO.existsByName(connection, dto.getName())) {
                     throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_ALREADY_EXISTS);
                 }
             }
 
-            ItemEntity itemEntity = ItemConverter.toEntity(dto);
+            ItemEntity itemEntity = ItemMapper.toEntity(dto);
             boolean isUpdated = itemDAO.update(connection, itemEntity);
 
             if (isUpdated) {
-                connection.commit(); // Commit transaction
+                connection.commit();
                 LOGGER.log(Level.INFO, "Item updated successfully: " + dto.getName());
                 return true;
             } else {
-                connection.rollback(); // Rollback on failure
+                connection.rollback();
                 LOGGER.log(Level.WARNING, "Failed to update item: " + dto.getName() + ", rolling back.");
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_UPDATE_FAILED);
             }
@@ -119,7 +118,7 @@ public class ItemServiceImpl implements ItemService {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection();
-            connection.setAutoCommit(false); // Start transaction
+            connection.setAutoCommit(false);
 
             LOGGER.log(Level.INFO, "Attempting to soft delete item ID: " + itemId + " by user ID: " + deletedByUserId);
 
@@ -130,11 +129,11 @@ public class ItemServiceImpl implements ItemService {
             boolean isDeleted = itemDAO.delete(connection, deletedByUserId, itemId);
 
             if (isDeleted) {
-                connection.commit(); // Commit transaction
+                connection.commit();
                 LOGGER.log(Level.INFO, "Item soft deleted successfully: ID " + itemId);
                 return true;
             } else {
-                connection.rollback(); // Rollback on failure
+                connection.rollback();
                 LOGGER.log(Level.WARNING, "Failed to soft delete item: ID " + itemId + ", rolling back.");
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_DELETION_FAILED);
             }
@@ -160,7 +159,7 @@ public class ItemServiceImpl implements ItemService {
             if (entity == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_NOT_FOUND);
             }
-            return ItemConverter.toDto(entity);
+            return ItemMapper.toDto(entity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during item search by ID: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -178,7 +177,7 @@ public class ItemServiceImpl implements ItemService {
             if (entity == null) {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_NOT_FOUND);
             }
-            return ItemConverter.toDto(entity);
+            return ItemMapper.toDto(entity);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during item search by name: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -193,7 +192,7 @@ public class ItemServiceImpl implements ItemService {
         try {
             connection = DBUtil.getConnection();
             List<ItemEntity> entities = itemDAO.getAll(connection, searchParams);
-            return ItemConverter.toDTOList(entities);
+            return ItemMapper.toDTOList(entities);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during getAll items: " + e.getMessage(), e);
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
@@ -233,18 +232,16 @@ public class ItemServiceImpl implements ItemService {
                 throw new PahanaEduOnlineBillingSystemException(ExceptionType.INVALID_ITEM_INPUTS);
             }
 
-            // Calculate new stock quantity
             int newStockQuantity = existingItem.getStockQuantity() + quantityToAdd;
 
-            // Create a DTO for update, preserving existing name and unit price
             ItemDTO updateDto = new ItemDTO();
             updateDto.setId(itemId);
-            updateDto.setName(existingItem.getName()); // Keep original name
-            updateDto.setUnitPrice(existingItem.getUnitPrice()); // Keep original price
-            updateDto.setStockQuantity(newStockQuantity); // Set new stock
+            updateDto.setName(existingItem.getName());
+            updateDto.setUnitPrice(existingItem.getUnitPrice());
+            updateDto.setStockQuantity(newStockQuantity);
             updateDto.setUpdatedBy(updatedBy);
 
-            boolean isRestocked = itemDAO.update(connection, ItemConverter.toEntity(updateDto));
+            boolean isRestocked = itemDAO.update(connection, ItemMapper.toEntity(updateDto));
 
             if (isRestocked) {
                 connection.commit();
@@ -253,7 +250,7 @@ public class ItemServiceImpl implements ItemService {
             } else {
                 connection.rollback();
                 LOGGER.log(Level.WARNING, "Failed to restock item ID " + itemId + ", rolling back.");
-                throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_UPDATE_FAILED); // Use update failed for restock
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_UPDATE_FAILED);
             }
         } catch (SQLException e) {
             DBUtil.rollbackConnection(connection);

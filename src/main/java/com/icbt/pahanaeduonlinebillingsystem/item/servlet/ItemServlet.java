@@ -1,10 +1,12 @@
 package com.icbt.pahanaeduonlinebillingsystem.item.servlet;
 
-import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.SendResponse;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.ServletUtil;
+import com.icbt.pahanaeduonlinebillingsystem.common.util.Validator;
 import com.icbt.pahanaeduonlinebillingsystem.item.dto.ItemDTO;
+import com.icbt.pahanaeduonlinebillingsystem.item.mapper.ItemMapper;
 import com.icbt.pahanaeduonlinebillingsystem.item.service.ItemService;
 import com.icbt.pahanaeduonlinebillingsystem.item.service.impl.ItemServiceImpl;
 import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
@@ -15,14 +17,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,69 +46,10 @@ public class ItemServlet extends HttpServlet {
         userService = new UserServiceImpl();
     }
 
-    // Helper to get userId from session
-    private Integer getUserIdFromSession(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("userId") != null) {
-            return (Integer) session.getAttribute("userId");
-        }
-        return null;
-    }
-
-    // Helper to get user role from session
-    private String getUserRoleFromSession(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("role") != null) {
-            return (String) session.getAttribute("role");
-        }
-        return null;
-    }
-
-    // Helper to convert ItemDTO to a Map for JSON serialization
-    // Now accepts optional username parameters
-    private Map<String, Object> itemDtoToMap(ItemDTO dto, String createdByUsername, String updatedByUsername, String deletedByUsername) {
-        if (dto == null) return null;
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", dto.getId());
-        map.put("name", dto.getName());
-        map.put("unitPrice", dto.getUnitPrice());
-        map.put("stockQuantity", dto.getStockQuantity());
-        map.put("createdBy", createdByUsername != null ? createdByUsername : (dto.getCreatedBy() != null ? String.valueOf(dto.getCreatedBy()) : "-"));
-        map.put("createdAt", dto.getCreatedAt());
-        map.put("updatedBy", updatedByUsername != null ? updatedByUsername : (dto.getUpdatedBy() != null ? String.valueOf(dto.getUpdatedBy()) : "-"));
-        map.put("updatedAt", dto.getUpdatedAt());
-        map.put("deletedBy", deletedByUsername != null ? deletedByUsername : (dto.getDeletedBy() != null ? String.valueOf(dto.getDeletedBy()) : "-"));
-        map.put("deletedAt", dto.getDeletedAt());
-        return map;
-    }
-
-    // Helper to parse x-www-form-urlencoded body for POST/PUT
-    private Map<String, String> parseUrlEncodedBody(HttpServletRequest req) throws IOException {
-        Map<String, String> params = new HashMap<>();
-        try (BufferedReader reader = req.getReader()) {
-            String body = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            if (body != null && !body.isEmpty()) {
-                Arrays.stream(body.split("&"))
-                        .forEach(pair -> {
-                            String[] keyValue = pair.split("=");
-                            if (keyValue.length == 2) {
-                                try {
-                                    params.put(URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8.name()),
-                                            URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8.name()));
-                                } catch (Exception e) {
-                                    LOGGER.log(Level.WARNING, "Error decoding URL-encoded parameter: " + e.getMessage());
-                                }
-                            }
-                        });
-            }
-        }
-        return params;
-    }
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
 
         if (!"ADMIN".equals(currentUserRole)) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only admins can add items."));
@@ -128,7 +66,6 @@ public class ItemServlet extends HttpServlet {
             String unitPriceStr = req.getParameter("unitPrice");
             String stockQuantityStr = req.getParameter("stockQuantity");
 
-            // Basic validation
             if (dto.getName() == null || dto.getName().trim().isEmpty() ||
                     unitPriceStr == null || unitPriceStr.trim().isEmpty() ||
                     stockQuantityStr == null || stockQuantityStr.trim().isEmpty()) {
@@ -140,11 +77,17 @@ public class ItemServlet extends HttpServlet {
             dto.setStockQuantity(Integer.parseInt(stockQuantityStr));
             dto.setCreatedBy(currentUserId);
 
+            Map<String, String> errors = Validator.itemValidate(dto);
+            if (!errors.isEmpty()) {
+                LOGGER.log(Level.WARNING, "Item creation validation failed: " + errors);
+                SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid item data provided.", "errors", errors));
+                return;
+            }
+
             boolean isAdded = itemService.add(dto);
             if (isAdded) {
                 ItemDTO addedItem = itemService.searchByName(dto.getName());
-                // For add, we might not need full user details for response, just confirm
-                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Item added successfully", "item", itemDtoToMap(addedItem, null, null, null)));
+                SendResponse.sendJson(resp, HttpServletResponse.SC_CREATED, Map.of("message", "Item added successfully", "item", ItemMapper.toMap(addedItem, null, null, null)));
             } else {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item addition failed unexpectedly."));
             }
@@ -180,10 +123,9 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // All roles can view items
         try {
-            String idStr = req.getParameter("id"); // Check for ID for single item view
-            String name = req.getParameter("name"); // Check for name for single item view
+            String idStr = req.getParameter("id");
+            String name = req.getParameter("name");
 
             if (idStr != null && !idStr.trim().isEmpty()) {
                 Integer itemId = Integer.parseInt(idStr);
@@ -207,10 +149,9 @@ public class ItemServlet extends HttpServlet {
                     if (user != null) deletedByUsername = user.getUsername();
                 }
 
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, ItemMapper.toMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
             } else if (name != null && !name.trim().isEmpty()) {
                 ItemDTO dto = itemService.searchByName(name);
-                // For search by name (single item), also enrich with usernames
                 String createdByUsername = null;
                 String updatedByUsername = null;
                 String deletedByUsername = null;
@@ -227,18 +168,16 @@ public class ItemServlet extends HttpServlet {
                     UserDTO user = userService.searchById(dto.getDeletedBy());
                     if (user != null) deletedByUsername = user.getUsername();
                 }
-                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemDtoToMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
-            }
-            else {
+                SendResponse.sendJson(resp, HttpServletResponse.SC_OK, ItemMapper.toMap(dto, createdByUsername, updatedByUsername, deletedByUsername));
+            } else {
                 Map<String, String> searchParams = new HashMap<>();
                 String searchTerm = req.getParameter("search");
                 if (searchTerm != null && !searchTerm.trim().isEmpty()) {
                     searchParams.put("search", searchTerm);
                 }
                 List<ItemDTO> list = itemService.getAll(searchParams);
-                // For list of items, send simplified map without full user details to avoid large payload
                 List<Map<String, Object>> itemMaps = list.stream()
-                        .map(item -> itemDtoToMap(item, null, null, null)) // Pass null for usernames in list view
+                        .map(item -> ItemMapper.toMap(item, null, null, null)) // Pass null for usernames in list view
                         .collect(Collectors.toList());
                 SendResponse.sendJson(resp, HttpServletResponse.SC_OK, itemMaps);
             }
@@ -271,10 +210,10 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
 
-        if (!"ADMIN".equals(currentUserRole)) { // Only admins can update items
+        if (!"ADMIN".equals(currentUserRole)) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only admins can update items."));
             return;
         }
@@ -284,8 +223,8 @@ public class ItemServlet extends HttpServlet {
         }
 
         try {
-            Map<String, String> requestBodyParams = parseUrlEncodedBody(req);
-            String action = requestBodyParams.get("action"); // Get action from parsed body
+            Map<String, String> requestBodyParams = ServletUtil.parseUrlEncodedBody(req);
+            String action = requestBodyParams.get("action");
 
             ItemDTO dto = new ItemDTO();
             String idStr = requestBodyParams.get("id");
@@ -297,43 +236,44 @@ public class ItemServlet extends HttpServlet {
             }
 
             if ("restock".equals(action)) {
-                // Handle Restock operation
                 String quantityToAddStr = requestBodyParams.get("quantityToAdd");
-                if (quantityToAddStr == null || quantityToAddStr.isEmpty()) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Quantity to add is required for restock."));
+                int quantityToAdd = Integer.parseInt(quantityToAddStr);
+
+                Map<String, String> errors = Validator.restockValidate(quantityToAdd);
+                if (!errors.isEmpty()) {
+                    LOGGER.log(Level.WARNING, "Item restock validation failed: " + errors);
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid restock data.", "errors", errors));
                     return;
                 }
-                int quantityToAdd = Integer.parseInt(quantityToAddStr);
 
                 boolean isRestocked = itemService.restockItem(dto.getId(), quantityToAdd, currentUserId);
                 if (isRestocked) {
                     ItemDTO restockedItem = itemService.searchById(dto.getId());
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item restocked successfully", "item", itemDtoToMap(restockedItem, null, null, null)));
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item restocked successfully", "item", ItemMapper.toMap(restockedItem, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item restock failed unexpectedly."));
                 }
 
             } else if ("update".equals(action)) {
-                // Handle general Update operation
                 dto.setName(requestBodyParams.get("name"));
                 String unitPriceStr = requestBodyParams.get("unitPrice");
                 String stockQuantityStr = requestBodyParams.get("stockQuantity");
-
-                if (dto.getName() == null || dto.getName().trim().isEmpty() ||
-                        unitPriceStr == null || unitPriceStr.trim().isEmpty() ||
-                        stockQuantityStr == null || stockQuantityStr.trim().isEmpty()) {
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Missing required item fields for update."));
-                    return;
-                }
 
                 dto.setUnitPrice(new BigDecimal(unitPriceStr));
                 dto.setStockQuantity(Integer.parseInt(stockQuantityStr));
                 dto.setUpdatedBy(currentUserId);
 
+                Map<String, String> errors = Validator.itemValidate(dto);
+                if (!errors.isEmpty()) {
+                    LOGGER.log(Level.WARNING, "Item update validation failed: " + errors);
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Invalid item data provided.", "errors", errors));
+                    return;
+                }
+
                 boolean isUpdated = itemService.update(dto);
                 if (isUpdated) {
-                    ItemDTO updatedItem = itemService.searchById(dto.getId()); // Fetch by ID after update
-                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item updated successfully", "item", itemDtoToMap(updatedItem, null, null, null)));
+                    ItemDTO updatedItem = itemService.searchById(dto.getId());
+                    SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item updated successfully", "item", ItemMapper.toMap(updatedItem, null, null, null)));
                 } else {
                     SendResponse.sendJson(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of("message", "Item update failed unexpectedly."));
                 }
@@ -376,10 +316,9 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String currentUserRole = getUserRoleFromSession(req);
-        Integer currentUserId = getUserIdFromSession(req);
+        String currentUserRole = ServletUtil.getUserRoleFromSession(req);
+        Integer currentUserId = ServletUtil.getUserIdFromSession(req);
 
-        // Only Initial Admin (ID = 1) can delete items
         if (!"ADMIN".equals(currentUserRole) || (currentUserId != null && currentUserId != INITIAL_ADMIN_ID)) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_FORBIDDEN, Map.of("message", "Unauthorized: Only the Initial Admin can delete items."));
             return;
@@ -389,7 +328,7 @@ public class ItemServlet extends HttpServlet {
             return;
         }
 
-        String idStr = req.getParameter("id"); // Item ID comes as query param for DELETE
+        String idStr = req.getParameter("id");
 
         if (idStr == null || idStr.trim().isEmpty()) {
             SendResponse.sendJson(resp, HttpServletResponse.SC_BAD_REQUEST, Map.of("message", "Item ID is required for deletion."));
@@ -398,7 +337,7 @@ public class ItemServlet extends HttpServlet {
 
         try {
             Integer itemId = Integer.parseInt(idStr);
-            boolean isDeleted = itemService.delete(currentUserId, itemId); // Pass deleter ID and item ID
+            boolean isDeleted = itemService.delete(currentUserId, itemId);
             if (isDeleted) {
                 SendResponse.sendJson(resp, HttpServletResponse.SC_OK, Map.of("message", "Item deleted successfully."));
             } else {
