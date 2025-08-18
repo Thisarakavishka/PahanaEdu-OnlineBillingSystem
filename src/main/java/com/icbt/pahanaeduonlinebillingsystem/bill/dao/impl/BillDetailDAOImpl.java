@@ -2,6 +2,7 @@ package com.icbt.pahanaeduonlinebillingsystem.bill.dao.impl;
 
 import com.icbt.pahanaeduonlinebillingsystem.bill.dao.BillDetailDAO;
 import com.icbt.pahanaeduonlinebillingsystem.bill.entity.BillDetailEntity;
+import com.icbt.pahanaeduonlinebillingsystem.bill.mapper.BillMapper;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.ExceptionType;
 import com.icbt.pahanaeduonlinebillingsystem.common.exception.PahanaEduOnlineBillingSystemException;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
@@ -90,7 +91,7 @@ public class BillDetailDAOImpl implements BillDetailDAO {
         try {
             rs = DAOUtil.executeQuery(connection, sql, billId);
             while (rs.next()) {
-                details.add(mapResultSetToBillDetailEntity(rs));
+                details.add(BillMapper.mapResultSetToBillDetailEntity(rs));
             }
         } finally {
             DBUtil.closeResultSet(rs);
@@ -102,21 +103,5 @@ public class BillDetailDAOImpl implements BillDetailDAO {
     public List<BillDetailEntity> getAll(Connection connection, Map<String, String> searchParams) throws SQLException, ClassNotFoundException {
         throw new UnsupportedOperationException("GetAll method not implemented yet");
 
-    }
-
-    private BillDetailEntity mapResultSetToBillDetailEntity(ResultSet resultSet) throws SQLException {
-        BillDetailEntity entity = new BillDetailEntity();
-        entity.setId(resultSet.getInt("id"));
-        entity.setBillId(resultSet.getInt("bill_id"));
-        entity.setItemId(resultSet.getInt("item_id"));
-        entity.setItemNameAtSale(resultSet.getString("item_name_at_sale"));
-        entity.setUnitPriceAtSale(resultSet.getBigDecimal("unit_price_at_sale"));
-        entity.setUnits(resultSet.getInt("units"));
-        entity.setTotal(resultSet.getBigDecimal("total"));
-        entity.setCreatedBy(resultSet.getObject("created_by", Integer.class));
-        entity.setCreatedAt(resultSet.getTimestamp("created_at"));
-        entity.setDeletedBy(resultSet.getObject("deleted_by", Integer.class));
-        entity.setDeletedAt(resultSet.getTimestamp("deleted_at"));
-        return entity;
     }
 }
