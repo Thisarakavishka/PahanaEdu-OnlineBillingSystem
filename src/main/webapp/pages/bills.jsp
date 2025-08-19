@@ -305,18 +305,7 @@
             return "<%= request.getContextPath() %>";
         }
 
-        function showMessage(message, type = 'success') {
-            const msgDisplay = document.getElementById('messageDisplay'),
-                msgText = document.getElementById('messageText');
-            if (msgDisplay && msgText) {
-                msgText.textContent = message;
-                msgDisplay.className = 'p-4 mb-4 text-sm rounded-lg';
-                if (type === 'success') msgDisplay.classList.add('bg-green-100', 'text-green-800');
-                else msgDisplay.classList.add('bg-red-100', 'text-red-800');
-                msgDisplay.classList.remove('hidden');
-                setTimeout(() => msgDisplay.classList.add('hidden'), 5000);
-            }
-        }
+        const showMessage = showToast;
 
         // --- Step Navigation & UI Updates ---
         function showStep(stepNumber) {
@@ -618,6 +607,7 @@
         if (billRefreshBtn) {
             billRefreshBtn.addEventListener('click', () => fetchBills(billSearchInput.value));
         }
+
         if (billSearchInput) {
             billSearchInput.addEventListener('input', () => {
                 clearTimeout(searchTimeout);
@@ -631,6 +621,7 @@
         backBtn.addEventListener('click', () => showStep(currentStep - 1));
         finalizeBillBtn.addEventListener('click', handleFinalizeBill);
         itemSearchInput.addEventListener('input', handleItemSearchInput);
+
         customerPhoneSearch.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
