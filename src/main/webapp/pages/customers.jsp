@@ -152,65 +152,53 @@
 <!-- View Customer Modal -->
 <div id="customerViewModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
-
-        <!-- Close Button -->
-        <button id="closeCustomerViewModalBtn"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
+        <button id="closeCustomerViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
 
-        <!-- Title -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Customer Details</h2>
+        <div class="flex items-center space-x-4 mb-6 border-b pb-4">
+            <div class="bg-gray-800 text-white rounded-full p-3">
+                <i data-feather="user" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h2 id="viewCustomerName" class="text-2xl font-bold text-gray-800">Customer Name</h2>
+                <p id="viewCustomerAccountNumber" class="text-gray-500 font-mono"></p>
+            </div>
+        </div>
 
-        <!-- Details Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer ID</label>
-                <p id="viewCustomerId" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Contact Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm bg-gray-50">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">PHONE</span>
+                    <strong id="viewCustomerPhone" class="text-gray-800"></strong>
+                </div>
+                <hr>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">ADDRESS</span>
+                    <strong id="viewCustomerAddress" class="text-gray-800 text-right"></strong>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Account Number</label>
-                <p id="viewCustomerAccountNumber"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer Name</label>
-                <p id="viewCustomerName" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Address</label>
-                <p id="viewCustomerAddress"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
-                <p id="viewCustomerPhone" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Units Consumed</label>
-                <p id="viewCustomerUnitsConsumed"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Created By</label>
-                <p id="viewCustomerCreatedBy"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Created At</label>
-                <p id="viewCustomerCreatedAt"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated By</label>
-                <p id="viewCustomerUpdatedBy"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated At</label>
-                <p id="viewCustomerUpdatedAt"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Account History</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between"><span>Total Units Consumed:</span> <strong
+                        id="viewCustomerUnitsConsumed" class="text-gray-800"></strong></div>
+                <hr class="my-1">
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewCustomerCreatedBy"
+                                                                                   class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewCustomerCreatedAt"
+                                                                                   class="text-gray-800"></strong></div>
+                <hr class="my-1">
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewCustomerUpdatedBy"
+                                                                                        class="text-gray-800"></strong>
+                </div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewCustomerUpdatedAt"
+                                                                                        class="text-gray-800"></strong>
+                </div>
             </div>
         </div>
     </div>
@@ -234,26 +222,11 @@
         viewCustomerAddress, viewCustomerPhone, viewCustomerUnitsConsumed, viewCustomerCreatedBy, viewCustomerCreatedAt,
         viewCustomerUpdatedBy, viewCustomerUpdatedAt;
 
-    // Get user role and ID from hidden inputs in dashboard.jsp
-    // FIX: Initialize userRole and loggedInUserId directly from hidden inputs
     const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
-    const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
+    const INITIAL_ADMIN_ID = 1;
 
-    // Function to display messages (success or error), Hide after 5 seconds
-    function showMessage(message, type = 'success') {
-        messageText.textContent = message;
-        messageDisplay.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-        if (type === 'success') {
-            messageDisplay.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-        } else {
-            messageDisplay.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-        }
-        messageDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            messageDisplay.classList.add('hidden');
-        }, 5000);
-    }
+    const showMessage = showToast;
 
     // Function to fetch customers from the backend
     async function fetchCustomers(searchTerm = '') {
@@ -456,24 +429,19 @@
 
     // Open View Customer Modal
     async function openViewModal(accountNumber) {
-        console.log('Attempting to open View Customer modal for Account Number:', accountNumber);
         try {
             const response = await fetch(getContextPath() + '/customers?accountNumber=' + encodeURIComponent(accountNumber));
             const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch customer details.');
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch customer details for viewing.');
-            }
-
-            viewCustomerId.textContent = data.id;
-            viewCustomerAccountNumber.textContent = data.accountNumber;
-            viewCustomerName.textContent = data.name;
-            viewCustomerAddress.textContent = data.address || '-';
-            viewCustomerPhone.textContent = data.phone;
-            viewCustomerUnitsConsumed.textContent = data.unitsConsumed + ' units';
-            // Display usernames, which are now provided by the servlet
-            viewCustomerCreatedBy.textContent = data.createdBy || '-';
-            viewCustomerCreatedAt.textContent = data.createdAt
+            // Populate the new modal structure
+            document.getElementById('viewCustomerName').textContent = data.name;
+            document.getElementById('viewCustomerAccountNumber').textContent = 'Account #' + data.accountNumber;
+            document.getElementById('viewCustomerPhone').textContent = data.phone;
+            document.getElementById('viewCustomerAddress').textContent = data.address || '-';
+            document.getElementById('viewCustomerUnitsConsumed').textContent = data.unitsConsumed + ' units';
+            document.getElementById('viewCustomerCreatedBy').textContent = data.createdBy || '-';
+            document.getElementById('viewCustomerCreatedAt').textContent = data.createdAt
                 ? new Date(data.createdAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
@@ -482,8 +450,8 @@
                 hour: '2-digit',
                 minute: '2-digit'
             }) : '-';
-            viewCustomerUpdatedBy.textContent = data.updatedBy || '-';
-            viewCustomerUpdatedAt.textContent = data.updatedAt
+            document.getElementById('viewCustomerUpdatedBy').textContent = data.updatedBy || '-';
+            document.getElementById('viewCustomerUpdatedAt').textContent = data.updatedAt
                 ? new Date(data.updatedAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
@@ -493,11 +461,11 @@
                 minute: '2-digit'
             }) : '-';
 
+
             customerViewModal.classList.remove('hidden');
-            console.log('View Customer modal should be visible with data:', data);
+            feather.replace();
         } catch (error) {
-            console.error('Error opening view modal:', error);
-            showMessage(error.message || 'Failed to load customer details for viewing.', 'error');
+            showMessage(error.message || 'Failed to load customer details.', 'error');
         }
     }
 

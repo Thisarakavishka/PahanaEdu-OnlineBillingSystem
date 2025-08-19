@@ -7,7 +7,6 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
-<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <%
     String role = (String) session.getAttribute("role");
@@ -135,64 +134,54 @@
 <!-- View Item Modal -->
 <div id="itemViewModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
-
-        <!-- Close Button -->
-        <button id="closeItemViewModalBtn"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
+        <button id="closeItemViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
 
-        <!-- Title -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Item Details</h2>
-
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Item ID</label>
-                <p id="viewItemId" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="flex items-center space-x-4 mb-6 border-b pb-4">
+            <div class="bg-gray-800 text-white rounded-full p-3">
+                <i data-feather="package" class="w-6 h-6"></i>
             </div>
-
             <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Item Name</label>
-                <p id="viewItemName" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+                <h2 id="viewItemName" class="text-2xl font-bold text-gray-800">Item Name</h2>
+                <p class="text-gray-500">Details and audit information</p>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Unit Price</label>
-                <p id="viewItemUnitPrice" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">ITEM ID</label>
+                <p id="viewItemId" class="text-lg font-bold text-gray-800"></p>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Stock Quantity</label>
-                <p id="viewItemStockQuantity" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">UNIT PRICE</label>
+                <p id="viewItemUnitPrice" class="text-lg font-bold text-gray-800"></p>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created By</label>
-                <p id="viewItemCreatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">STOCK QUANTITY</label>
+                <p id="viewItemStockQuantity" class="text-lg font-bold text-gray-800"></p>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created At</label>
-                <p id="viewItemCreatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Audit Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewItemCreatedBy"
+                                                                                   class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewItemCreatedAt"
+                                                                                   class="text-gray-800"></strong></div>
+                <hr>
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewItemUpdatedBy"
+                                                                                        class="text-gray-800"></strong>
+                </div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewItemUpdatedAt"
+                                                                                        class="text-gray-800"></strong>
+                </div>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated By</label>
-                <p id="viewItemUpdatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated At</label>
-                <p id="viewItemUpdatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
         </div>
     </div>
 </div>
-
 <!-- Restock Item Modal -->
 <div id="restockModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
@@ -263,20 +252,7 @@
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
     const INITIAL_ADMIN_ID = 1;
 
-    // Function to display messages (success/error)
-    function showMessage(message, type = 'success') {
-        messageText.textContent = message;
-        messageDisplay.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-        if (type === 'success') {
-            messageDisplay.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-        } else {
-            messageDisplay.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-        }
-        messageDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            messageDisplay.classList.add('hidden');
-        }, 5000); // Hide after 5 seconds
-    }
+    const showMessage = showToast;
 
     // Function to fetch items from the backend
     async function fetchItems(searchTerm = '') {

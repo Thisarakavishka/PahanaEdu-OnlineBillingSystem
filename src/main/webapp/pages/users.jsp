@@ -147,58 +147,41 @@
     </div>
 </div>
 
-<!-- View User Modal -->
-<div id="userViewModal"
-     class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
-
-        <!-- Close Button -->
-        <button id="closeUserViewModalBtn"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+<div id="userViewModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
+        <button id="closeUserViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
 
-        <!-- Title -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">User Details</h2>
-
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">User ID</label>
-                <p id="viewUserIdDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="flex items-center space-x-4 mb-6 border-b pb-4">
+            <div class="bg-gray-800 text-white rounded-full p-3">
+                <i data-feather="user" class="w-6 h-6"></i>
             </div>
-
             <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Username</label>
-                <p id="viewUsernameDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+                <h2 id="viewUsernameDisplay" class="text-2xl font-bold text-gray-800">Username</h2>
+                <p id="viewRoleDisplay" class="text-gray-500">User Role</p>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Role</label>
-                <p id="viewRoleDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Account Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm bg-gray-50">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">USER ID</span>
+                    <strong id="viewUserIdDisplay" class="text-gray-800 font-mono"></strong>
+                </div>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created By</label>
-                <p id="viewCreatedByDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Audit Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewCreatedByDisplay" class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewCreatedAtDisplay" class="text-gray-800"></strong></div>
+                <hr class="my-1">
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewUpdatedByDisplay" class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewUpdatedAtDisplay" class="text-gray-800"></strong></div>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created At</label>
-                <p id="viewCreatedAtDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated By</label>
-                <p id="viewUpdatedByDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated At</label>
-                <p id="viewUpdatedAtDisplay" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
         </div>
     </div>
 </div>
@@ -225,22 +208,7 @@
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
     const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
 
-    // --- Helper Functions (Defined first to ensure availability) ---
-
-    // Function to display messages (success/error)
-    function showMessage(message, type = 'success') {
-        messageText.textContent = message;
-        messageDisplay.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-        if (type === 'success') {
-            messageDisplay.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-        } else {
-            messageDisplay.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-        }
-        messageDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            messageDisplay.classList.add('hidden');
-        }, 5000); // Hide after 5 seconds
-    }
+    const showMessage = showToast;
 
     // Function to clear all validation error messages
     function clearValidationErrors() {
