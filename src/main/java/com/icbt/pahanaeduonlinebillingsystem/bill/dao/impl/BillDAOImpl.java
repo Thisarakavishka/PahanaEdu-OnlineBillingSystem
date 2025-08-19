@@ -171,16 +171,10 @@ public class BillDAOImpl implements BillDAO {
     @Override
     public BigDecimal calculateTotalRevenue(Connection connection) throws SQLException {
         String sql = "SELECT SUM(total_amount) FROM bills WHERE deleted_at IS NULL";
-        ResultSet rs = null;
-        try {
-            rs = DAOUtil.executeQuery(connection, sql);
+        try (PreparedStatement pst = connection.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
                 return rs.getBigDecimal(1) != null ? rs.getBigDecimal(1) : BigDecimal.ZERO;
             }
-        } catch (PahanaEduOnlineBillingSystemException e) {
-            LOGGER.log(Level.SEVERE, "Failed to calculate total revenue", e);
-        } finally {
-            DBUtil.closeResultSet(rs);
         }
         return BigDecimal.ZERO;
     }
@@ -189,25 +183,68 @@ public class BillDAOImpl implements BillDAO {
     public List<Map<String, Object>> getSalesForLast7Days(Connection connection) throws SQLException {
         List<Map<String, Object>> salesData = new ArrayList<>();
         String sql = "SELECT DATE(created_at) as sale_date, SUM(total_amount) as daily_total " +
-                "FROM bills " +
-                "WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND deleted_at IS NULL " +
-                "GROUP BY sale_date " +
-                "ORDER BY sale_date ASC";
-        ResultSet rs = null;
-        try {
-            rs = DAOUtil.executeQuery(connection, sql);
+                "FROM bills WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND deleted_at IS NULL " +
+                "GROUP BY sale_date ORDER BY sale_date ASC";
+        try (PreparedStatement pst = connection.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 Map<String, Object> dayData = new HashMap<>();
                 dayData.put("date", rs.getDate("sale_date"));
                 dayData.put("total", rs.getBigDecimal("daily_total"));
                 salesData.add(dayData);
             }
-        } catch (PahanaEduOnlineBillingSystemException e) {
-            LOGGER.log(Level.SEVERE, "Failed to fetch weekly sales data", e);
-        } finally {
-            DBUtil.closeResultSet(rs);
         }
         return salesData;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSellingItems(Connection connection, int limit) throws SQLException {
+        List<Map<String, Object>> topItems = new ArrayList<>();
+        String sql = "SELECT bd.item_name_at_sale as name, SUM(bd.total) as totalRevenue " +
+                "FROM bill_details bd JOIN bills b ON bd.bill_id = b.id " +
+                "WHERE b.deleted_at IS NULL GROUP BY name ORDER BY totalRevenue DESC LIMIT ?";
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setInt(1, limit);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    topItems.add(Map.of("name", rs.getString("name"), "value", rs.getBigDecimal("totalRevenue")));
+                }
+            }
+        }
+        return topItems;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSpendingCustomers(Connection connection, int limit) throws SQLException {
+        List<Map<String, Object>> topCustomers = new ArrayList<>();
+        String sql = "SELECT c.name, SUM(b.total_amount) as totalSpent " +
+                "FROM bills b JOIN customers c ON b.customer_id = c.id " +
+                "WHERE b.deleted_at IS NULL GROUP BY c.name ORDER BY totalSpent DESC LIMIT ?";
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setInt(1, limit);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    topCustomers.add(Map.of("name", rs.getString("name"), "value", rs.getBigDecimal("totalSpent")));
+                }
+            }
+        }
+        return topCustomers;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopPerformingUsers(Connection connection, int limit) throws SQLException {
+        List<Map<String, Object>> topUsers = new ArrayList<>();
+        String sql = "SELECT u.username, COUNT(b.id) as billCount " +
+                "FROM bills b JOIN users u ON b.created_by = u.id " +
+                "WHERE b.deleted_at IS NULL GROUP BY u.username ORDER BY billCount DESC LIMIT ?";
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setInt(1, limit);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    topUsers.add(Map.of("name", rs.getString("username"), "value", rs.getInt("billCount")));
+                }
+            }
+        }
+        return topUsers;
     }
 
     @Override

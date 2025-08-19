@@ -353,6 +353,36 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
+    public List<Map<String, Object>> getTopSellingItems(int limit) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            return billDAO.getTopSellingItems(connection, limit);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error fetching Top Selling Items data", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSpendingCustomers(int limit) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            return billDAO.getTopSpendingCustomers(connection, limit);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error fetching Top Spending Customers data", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopPerformingUsers(int limit) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            return billDAO.getTopPerformingUsers(connection, limit);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error fetching Top Performing Users data", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
     public Map<String, Object> generateFinancialReport(String startDate, String endDate) throws ClassNotFoundException {
         try (Connection connection = DBUtil.getConnection()) {
             Map<String, Object> reportData = billDAO.getFinancialSummary(connection, startDate, endDate);

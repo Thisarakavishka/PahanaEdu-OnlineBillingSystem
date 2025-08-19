@@ -57,6 +57,10 @@
                 <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "reports".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
                    href="dashboard.jsp?page=reports"><i data-feather="bar-chart-2"
                                                         class="w-5 h-5"></i><span>Reports</span></a></li>
+            <li>
+                <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "help".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
+                   href="dashboard.jsp?page=help"><i data-feather="help-circle"
+                                                     class="w-5 h-5"></i><span>Help</span></a></li>
         </ul>
 
         <div class="mt-auto pt-4 border-t border-gray-800">

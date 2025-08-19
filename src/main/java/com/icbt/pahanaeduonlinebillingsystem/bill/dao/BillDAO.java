@@ -26,6 +26,12 @@ public interface BillDAO extends CrudDAO<BillEntity> {
 
     List<Map<String, Object>> getSalesForLast7Days(Connection connection) throws SQLException;
 
+    List<Map<String, Object>> getTopSellingItems(Connection connection, int limit) throws SQLException;
+
+    List<Map<String, Object>> getTopSpendingCustomers(Connection connection, int limit) throws SQLException;
+
+    List<Map<String, Object>> getTopPerformingUsers(Connection connection, int limit) throws SQLException;
+
     Map<String, Object> getFinancialSummary(Connection connection, String startDate, String endDate) throws SQLException;
 
     List<Map<String, Object>> getTopSellingItems(Connection connection, String startDate, String endDate, int limit) throws SQLException;

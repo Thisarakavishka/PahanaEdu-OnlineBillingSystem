@@ -30,5 +30,11 @@ public interface BillService {
 
     List<Map<String, Object>> getWeeklySalesData() throws ClassNotFoundException;
 
+    List<Map<String, Object>> getTopSellingItems(int limit) throws ClassNotFoundException;
+
+    List<Map<String, Object>> getTopSpendingCustomers(int limit) throws ClassNotFoundException;
+
+    List<Map<String, Object>> getTopPerformingUsers(int limit) throws ClassNotFoundException;
+
     Map<String, Object> generateFinancialReport(String startDate, String endDate) throws ClassNotFoundException;
 }
