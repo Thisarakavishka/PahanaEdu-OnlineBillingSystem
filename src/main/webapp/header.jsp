@@ -6,21 +6,23 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.text.SimpleDateFormat, java.util.Date" %>
 <%
-    // Format date as "Friday, August 1, 2025"
-    SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d, yyyy");
-    String today = sdf.format(new Date());
+    String username = (String) session.getAttribute("username");
 %>
+<header class="bg-white shadow-sm p-4 flex justify-between items-center">
+    <button id="menu-button" class="lg:hidden text-gray-600 hover:text-gray-900">
+        <i data-feather="menu" class="w-6 h-6"></i>
+    </button>
 
-<header class="bg-white text-gray-800 p-4 sticky top-0 z-30 flex items-center justify-between lg:justify-end border-b border-gray-200">
-    <div class="lg:hidden">
-        <button id="menu-button" class="text-gray-500 hover:text-gray-900 focus:outline-none">
-            <i data-feather="menu" class="w-6 h-6"></i>
-        </button>
+    <div class="hidden md:block">
+        <h2 class="text-lg font-semibold text-gray-800">Welcome back, <%= username %>!</h2>
+        <p class="text-sm text-gray-500">Here's a summary of your system's activity.</p>
     </div>
-    <div class="flex flex-col lg:flex-row lg:items-center lg:gap-6 text-sm text-gray-500">
-        <span><%= today %></span>
-        <span>Welcome, <span class="font-semibold text-gray-700"><%= session.getAttribute("username") %></span></span>
+
+    <div class="flex items-center space-x-4">
+        <div class="bg-gray-800 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg">
+            <%-- Display the first letter of the username --%>
+            <%= username != null && !username.isEmpty() ? Character.toUpperCase(username.charAt(0)) : '?' %>
+        </div>
     </div>
 </header>

@@ -236,4 +236,18 @@ public class CustomerServiceImpl implements CustomerService {
             DBUtil.closeConnection(connection);
         }
     }
+
+    @Override
+    public int getCustomersCount() throws SQLException, ClassNotFoundException {
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            return customerDAO.getCustomersCount(connection);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during getCustomersCount: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
 }
