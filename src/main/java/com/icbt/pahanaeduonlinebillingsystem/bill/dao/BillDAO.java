@@ -15,4 +15,5 @@ public interface BillDAO extends CrudDAO<BillEntity> {
 
     int addBill(Connection connection, BillEntity entity) throws SQLException, ClassNotFoundException;
 
+    int getBillsCount(Connection connection) throws SQLException, ClassNotFoundException;
 }

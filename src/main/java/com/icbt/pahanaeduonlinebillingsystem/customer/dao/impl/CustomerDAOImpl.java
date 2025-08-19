@@ -215,4 +215,18 @@ public class CustomerDAOImpl implements CustomerDAO {
         }
     }
 
+    @Override
+    public int getCustomersCount(Connection connection) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(id) FROM customers WHERE deleted_at IS NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql);
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
 }

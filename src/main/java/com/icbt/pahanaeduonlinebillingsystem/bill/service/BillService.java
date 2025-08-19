@@ -4,6 +4,7 @@ import com.icbt.pahanaeduonlinebillingsystem.bill.dto.BillDTO;
 import com.icbt.pahanaeduonlinebillingsystem.common.base.CrudService;
 import com.icbt.pahanaeduonlinebillingsystem.common.base.SuperService;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -21,4 +22,6 @@ public interface BillService {
     BillDTO getBillById(Integer billId)throws ClassNotFoundException;
 
     List<BillDTO> getAll(Map<String, String> searchParams) throws ClassNotFoundException;
+
+    int getBillsCount() throws SQLException, ClassNotFoundException;
 }

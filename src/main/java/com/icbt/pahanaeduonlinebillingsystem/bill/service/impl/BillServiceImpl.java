@@ -276,4 +276,19 @@ public class BillServiceImpl implements BillService {
             DBUtil.closeConnection(connection);
         }
     }
+
+
+    @Override
+    public int getBillsCount() throws SQLException, ClassNotFoundException {
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            return billDAO.getBillsCount(connection);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during getBillsCount: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
 }

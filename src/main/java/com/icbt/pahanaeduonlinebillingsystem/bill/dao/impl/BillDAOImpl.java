@@ -132,4 +132,19 @@ public class BillDAOImpl implements BillDAO {
         }
         return bills;
     }
+
+    @Override
+    public int getBillsCount(Connection connection) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(id) FROM bills WHERE deleted_at IS NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql);
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
 }
