@@ -39,7 +39,7 @@
             <div class="flex justify-between items-center mb-4 border-b pb-2">
                 <h3 class="text-xl font-semibold text-gray-800">Report Summary</h3>
                 <button id="downloadPdfBtn"
-                        class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
                     <i data-feather="download" class="w-4 h-4"></i>
                     <span>Download PDF</span>
                 </button>

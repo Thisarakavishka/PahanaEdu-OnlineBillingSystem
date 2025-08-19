@@ -304,7 +304,7 @@
                 <i data-feather="printer" class="w-4 h-4"></i><span>Print Receipt</span>
             </button>
             <button id="downloadPdfBtn"
-                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
                 <i data-feather="download" class="w-4 h-4"></i><span>Download PDF</span>
             </button>
         </div>
