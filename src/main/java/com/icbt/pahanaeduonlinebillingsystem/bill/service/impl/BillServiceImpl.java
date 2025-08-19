@@ -27,6 +27,7 @@ import com.icbt.pahanaeduonlinebillingsystem.user.service.UserService;
 import com.icbt.pahanaeduonlinebillingsystem.user.service.impl.UserServiceImpl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -289,6 +290,92 @@ public class BillServiceImpl implements BillService {
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
+        }
+    }
+
+    @Override
+    public List<BillDTO> getRecentBills(int limit) throws ClassNotFoundException {
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            List<BillEntity> billEntities = billDAO.getRecentBills(connection, limit);
+            List<BillDTO> billDTOs = BillMapper.toDTOList(billEntities);
+
+            // This loop enriches each bill with the customer's name and the creator's username
+            for (BillDTO dto : billDTOs) {
+                try {
+                    CustomerDTO customer = CustomerMapper.toDto(customerDAO.searchById(connection, dto.getCustomerId()));
+                    if (customer != null) {
+                        dto.setCustomerName(customer.getName());
+                    }
+                } catch (PahanaEduOnlineBillingSystemException e) {
+                    LOGGER.log(Level.WARNING, "Customer not found for recent bill ID " + dto.getId());
+                    dto.setCustomerName("N/A");
+                }
+                try {
+                    UserDTO createdByUser = userService.searchById(dto.getCreatedBy());
+                    if (createdByUser != null) {
+                        dto.setCreateByUsername(createdByUser.getUsername());
+                    }
+                } catch (PahanaEduOnlineBillingSystemException e) {
+                    LOGGER.log(Level.WARNING, "Creator user not found for recent bill ID " + dto.getId());
+                    dto.setCreateByUsername("N/A");
+                }
+            }
+
+            return billDTOs;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during getRecentBills: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
+
+    @Override
+    public BigDecimal getTotalRevenue() throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            return billDAO.calculateTotalRevenue(connection);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error calculating total revenue", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getWeeklySalesData() throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            return billDAO.getSalesForLast7Days(connection);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error fetching weekly sales data", e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public Map<String, Object> generateFinancialReport(String startDate, String endDate) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            Map<String, Object> reportData = billDAO.getFinancialSummary(connection, startDate, endDate);
+
+            List<Map<String, Object>> topItems = billDAO.getTopSellingItems(connection, startDate, endDate, 5); // Get top 5 items
+            Map<String, Object> topCustomer = billDAO.getTopCustomer(connection, startDate, endDate);
+
+            BigDecimal totalRevenue = (BigDecimal) reportData.getOrDefault("totalRevenue", BigDecimal.ZERO);
+            int numberOfBills = (int) reportData.getOrDefault("numberOfBills", 0);
+
+            if (numberOfBills > 0) {
+                reportData.put("averageBillValue", totalRevenue.divide(new BigDecimal(numberOfBills), 2, RoundingMode.HALF_UP));
+            } else {
+                reportData.put("averageBillValue", BigDecimal.ZERO);
+            }
+
+            reportData.put("topSellingItems", topItems);
+            reportData.put("topCustomer", topCustomer);
+
+            return reportData;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during report generation: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         }
     }
 }

@@ -9,8 +9,10 @@ import com.icbt.pahanaeduonlinebillingsystem.common.util.DAOUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.DBUtil;
 import com.icbt.pahanaeduonlinebillingsystem.common.util.LogUtil;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -146,5 +148,139 @@ public class BillDAOImpl implements BillDAO {
         } finally {
             DBUtil.closeResultSet(resultSet);
         }
+    }
+
+    @Override
+    public List<BillEntity> getRecentBills(Connection connection, int limit) throws SQLException {
+        List<BillEntity> recentBills = new ArrayList<>();
+        String sql = "SELECT * FROM bills WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ?";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql, limit);
+            while (resultSet.next()) {
+                recentBills.add(BillMapper.mapResultSetToBillEntity(resultSet));
+            }
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            LOGGER.log(Level.SEVERE, "Failed to fetch recent bills in DAO", e);
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+        return recentBills;
+    }
+
+    @Override
+    public BigDecimal calculateTotalRevenue(Connection connection) throws SQLException {
+        String sql = "SELECT SUM(total_amount) FROM bills WHERE deleted_at IS NULL";
+        ResultSet rs = null;
+        try {
+            rs = DAOUtil.executeQuery(connection, sql);
+            if (rs.next()) {
+                return rs.getBigDecimal(1) != null ? rs.getBigDecimal(1) : BigDecimal.ZERO;
+            }
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            LOGGER.log(Level.SEVERE, "Failed to calculate total revenue", e);
+        } finally {
+            DBUtil.closeResultSet(rs);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    @Override
+    public List<Map<String, Object>> getSalesForLast7Days(Connection connection) throws SQLException {
+        List<Map<String, Object>> salesData = new ArrayList<>();
+        String sql = "SELECT DATE(created_at) as sale_date, SUM(total_amount) as daily_total " +
+                "FROM bills " +
+                "WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND deleted_at IS NULL " +
+                "GROUP BY sale_date " +
+                "ORDER BY sale_date ASC";
+        ResultSet rs = null;
+        try {
+            rs = DAOUtil.executeQuery(connection, sql);
+            while (rs.next()) {
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("date", rs.getDate("sale_date"));
+                dayData.put("total", rs.getBigDecimal("daily_total"));
+                salesData.add(dayData);
+            }
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            LOGGER.log(Level.SEVERE, "Failed to fetch weekly sales data", e);
+        } finally {
+            DBUtil.closeResultSet(rs);
+        }
+        return salesData;
+    }
+
+    @Override
+    public Map<String, Object> getFinancialSummary(Connection connection, String startDate, String endDate) throws SQLException {
+        Map<String, Object> summary = new HashMap<>();
+        String sql = "SELECT " +
+                "SUM(b.total_amount) AS totalRevenue, " +
+                "COUNT(DISTINCT b.id) AS numberOfBills, " +
+                "SUM(bd.units) AS totalItemsSold " +
+                "FROM bills b JOIN bill_details bd ON b.id = bd.bill_id " +
+                "WHERE b.deleted_at IS NULL AND b.created_at BETWEEN ? AND ?";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setString(1, startDate);
+            pst.setString(2, endDate + " 23:59:59");
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    summary.put("totalRevenue", rs.getBigDecimal("totalRevenue") != null ? rs.getBigDecimal("totalRevenue") : BigDecimal.ZERO);
+                    summary.put("numberOfBills", rs.getInt("numberOfBills"));
+                    summary.put("totalItemsSold", rs.getInt("totalItemsSold"));
+                }
+            }
+        }
+        return summary;
+    }
+
+    @Override
+    public Map<String, Object> getTopCustomer(Connection connection, String startDate, String endDate) throws SQLException {
+        Map<String, Object> topCustomer = new HashMap<>();
+        String sql = "SELECT c.name, SUM(b.total_amount) as totalSpent " +
+                "FROM bills b JOIN customers c ON b.customer_id = c.id " +
+                "WHERE b.deleted_at IS NULL AND b.created_at BETWEEN ? AND ? " +
+                "GROUP BY c.name " +
+                "ORDER BY totalSpent DESC " +
+                "LIMIT 1";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setString(1, startDate);
+            pst.setString(2, endDate + " 23:59:59");
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    topCustomer.put("name", rs.getString("name"));
+                    topCustomer.put("totalSpent", rs.getBigDecimal("totalSpent"));
+                }
+            }
+        }
+        return topCustomer;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopSellingItems(Connection connection, String startDate, String endDate, int limit) throws SQLException {
+        List<Map<String, Object>> topItems = new ArrayList<>();
+        String sql = "SELECT bd.item_name_at_sale as itemName, SUM(bd.units) as totalQuantity, SUM(bd.total) as totalRevenue " +
+                "FROM bill_details bd JOIN bills b ON bd.bill_id = b.id " +
+                "WHERE b.deleted_at IS NULL AND b.created_at BETWEEN ? AND ? " +
+                "GROUP BY itemName " +
+                "ORDER BY totalRevenue DESC " +
+                "LIMIT ?";
+
+        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            pst.setString(1, startDate);
+            pst.setString(2, endDate + " 23:59:59");
+            pst.setInt(3, limit);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> itemData = new HashMap<>();
+                    itemData.put("name", rs.getString("itemName"));
+                    itemData.put("quantity", rs.getInt("totalQuantity"));
+                    itemData.put("revenue", rs.getBigDecimal("totalRevenue"));
+                    topItems.add(itemData);
+                }
+            }
+        }
+        return topItems;
     }
 }
