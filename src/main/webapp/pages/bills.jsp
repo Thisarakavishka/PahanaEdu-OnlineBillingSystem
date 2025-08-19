@@ -213,71 +213,81 @@
 
 <div id="viewBillModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl relative">
-        <button id="closeViewBillModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i
-                data-feather="x" class="w-6 h-6"></i></button>
-        <div id="printable-receipt">
-            <div class="text-center mb-8">
-                <i data-feather="book-open" class="w-12 h-12 text-gray-800 mx-auto"></i>
-                <h1 class="text-3xl font-extrabold text-gray-900">Pahana Edu</h1>
-                <p class="text-md text-gray-500">Official Receipt</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Bill Information</h3>
-                    <div class="space-y-1 text-sm">
-                        <p><span class="font-semibold">Bill ID:</span> #<span id="viewBillId"></span></p>
-                        <p><span class="font-semibold">Created By:</span> <span id="viewBillGeneratedBy"></span></p>
-                        <p><span class="font-semibold">Created At:</span> <span id="viewBillGeneratedAt"></span></p>
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl flex flex-col" style="height: 90vh; max-height: 800px;">
+        <div class="p-6 border-b relative">
+            <h2 class="text-2xl font-bold text-gray-800 text-center">Receipt</h2>
+            <button id="closeViewBillModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i
+                    data-feather="x" class="w-6 h-6"></i></button>
+        </div>
+
+        <div class="overflow-y-auto p-8">
+            <div id="printable-receipt">
+                <div class="text-center mb-8">
+                    <i data-feather="book-open" class="w-12 h-12 text-gray-800 mx-auto"></i>
+                    <h1 class="text-3xl font-extrabold text-gray-900">Pahana Edu</h1>
+                    <p class="text-md text-gray-500">Official Receipt</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Bill Information</h3>
+                        <div class="space-y-1 text-sm">
+                            <p><span class="font-semibold">Bill ID:</span> #<span id="viewBillId"></span></p>
+                            <p><span class="font-semibold">Created By:</span> <span id="viewBillGeneratedBy"></span></p>
+                            <p><span class="font-semibold">Created At:</span> <span id="viewBillGeneratedAt"></span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Customer Information</h3>
+                        <div class="space-y-1 text-sm">
+                            <p><span class="font-semibold">Name:</span> <span id="viewBillCustomerName"></span></p>
+                            <p><span class="font-semibold">Account No:</span> <span
+                                    id="viewBillCustomerAccountNo"></span></p>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-2 text-gray-800 border-b pb-1">Customer Information</h3>
-                    <div class="space-y-1 text-sm">
-                        <p><span class="font-semibold">Name:</span> <span id="viewBillCustomerName"></span></p>
-                        <p><span class="font-semibold">Account No:</span> <span id="viewBillCustomerAccountNo"></span>
-                        </p>
+                <hr class="my-6">
+                <h3 class="text-lg font-semibold mb-3 text-gray-800">Order Summary</h3>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Item
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Price
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Quantity
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Subtotal
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="viewBillItemsTableBody" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <div class="w-full md:w-2/5 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-lg font-bold flex justify-between"><span>Total Amount:</span> <span
+                                id="viewBillTotalAmount"></span></p>
                     </div>
                 </div>
-            </div>
-            <hr class="my-6">
-            <h3 class="text-lg font-semibold mb-3 text-gray-800">Order Summary</h3>
-            <div class="overflow-x-auto rounded-lg border">
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Item
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Price
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Quantity
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Subtotal
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody id="viewBillItemsTableBody" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
-                </table>
-            </div>
-            <div class="mt-4 flex justify-end">
-                <div class="w-full md:w-2/5 p-4 bg-gray-50 rounded-lg">
-                    <p class="text-lg font-bold flex justify-between"><span>Total Amount:</span> <span
-                            id="viewBillTotalAmount"></span></p>
+                <div class="text-center mt-8 text-xs text-gray-400">
+                    <p>Thank you for your business!</p>
                 </div>
-            </div>
-            <div class="text-center mt-8 text-xs text-gray-400">
-                <p>Thank you for your business!</p>
             </div>
         </div>
-        <div class="mt-8 pt-4 border-t flex justify-end">
+
+        <div class="mt-auto p-6 border-t bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
             <button id="printBillBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
-                <i data-feather="printer" class="w-4 h-4"></i>
-                <span>Print Receipt</span>
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
+                <i data-feather="printer" class="w-4 h-4"></i><span>Print Receipt</span>
+            </button>
+            <button id="downloadPdfBtn"
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
+                <i data-feather="download" class="w-4 h-4"></i><span>Download PDF</span>
             </button>
         </div>
     </div>
@@ -287,6 +297,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- State, Constants & All Element References ---
         let currentStep = 1, currentCustomer = null, currentBillItems = [], searchTimeout;
+        let currentViewingBill = null;
         const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
         const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value, 10) : null;
         const INITIAL_ADMIN_ID = 1;
@@ -550,6 +561,7 @@
                 const response = await fetch(`\${getContextPath()}/bills?id=\${billId}`);
                 if (!response.ok) throw new Error('Failed to fetch bill details.');
                 const billData = await response.json();
+                currentViewingBill = billData;
                 populateViewBillModal(billData);
                 viewModal.classList.remove('hidden');
             } catch (error) {
@@ -584,6 +596,79 @@
             }
         }
 
+        function downloadReceiptAsPDF() {
+            if (!currentViewingBill) {
+                showMessage("No bill data available to download.", "error");
+                return;
+            }
+
+            const {jsPDF} = window.jspdf;
+            const doc = new jsPDF();
+
+            const billData = currentViewingBill;
+            const billDate = new Date(billData.generatedAt).toLocaleDateString('en-GB');
+
+            // --- PDF Header ---
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.text("Pahana Edu", 20, 20);
+            doc.setFontSize(16);
+            doc.text("Official Receipt", 20, 30);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.text(`Bill ID: #\${billData.id}`, 20, 40);
+            doc.text(`Date: \${billDate}`, 20, 46);
+
+            // --- Customer Info ---
+            doc.setFontSize(11);
+            doc.text("Bill To:", 20, 60);
+            doc.setFont("helvetica", "bold");
+            doc.text(billData.customerName, 20, 66);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Account No: \${billData.customerAccountNumber}`, 20, 72);
+
+            // --- Items Table ---
+            const tableColumn = ["Item Description", "Unit Price", "Quantity", "Subtotal"];
+            const tableRows = [];
+
+            billData.details.forEach(item => {
+                const itemData = [
+                    item.itemNameAtSale,
+                    `Rs. \${parseFloat(item.unitPriceAtSale).toFixed(2)}`,
+                    item.units,
+                    {content: `Rs. \${parseFloat(item.total).toFixed(2)}`, styles: {halign: 'right'}}
+                ];
+                tableRows.push(itemData);
+            });
+
+            // Add a summary row for the total amount
+            const totalRow = [
+                {content: 'Total Amount', colSpan: 3, styles: {halign: 'right', fontStyle: 'bold'}},
+                {
+                    content: `Rs. \${parseFloat(billData.totalAmount).toFixed(2)}`,
+                    styles: {halign: 'right', fontStyle: 'bold'}
+                }
+            ];
+            tableRows.push(totalRow);
+
+            doc.autoTable({
+                startY: 80,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: {fillColor: [30, 30, 30]} // Dark header
+            });
+
+            // --- PDF Footer ---
+            const finalY = doc.lastAutoTable.finalY;
+            doc.setFontSize(10);
+            doc.text("Thank you for your business!", 105, finalY + 20, {align: "center"});
+
+            // --- Save the PDF ---
+            doc.save(`PahanaEdu-Receipt-\${billData.id}.pdf`);
+        }
+
         // --- Event Listeners ---
         const billRefreshBtn = document.getElementById('billRefreshBtn');
         const billSearchInput = document.getElementById('billSearchInput');
@@ -615,6 +700,7 @@
             });
         }
 
+        document.getElementById('downloadPdfBtn').addEventListener('click', downloadReceiptAsPDF);
         document.getElementById('closeBillGenModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
         document.getElementById('closeViewBillModalBtn').addEventListener('click', () => viewModal.classList.add('hidden'));
         nextBtn.addEventListener('click', nextStep);
