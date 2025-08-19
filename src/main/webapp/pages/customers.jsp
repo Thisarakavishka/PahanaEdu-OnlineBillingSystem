@@ -20,13 +20,31 @@
             <h1 class="text-2xl font-bold text-gray-800">Customer Management</h1>
             <p class="text-gray-600">Manage customer accounts in your system.</p>
         </div>
-        <c:if test='<%= "ADMIN".equals(role) %>'>
-            <button id="addCustomerBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 transition duration-200 ease-in-out shadow-md">
-                <i data-feather="plus-circle" class="w-5 h-5"></i>
-                <span>Add New Customer</span>
-            </button>
-        </c:if>
+        <div class="flex items-center space-x-2">
+            <div class="relative inline-block text-left">
+                <button id="exportBtn"
+                        class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2 hover:bg-gray-50">
+                    <i data-feather="download" class="w-5 h-5"></i>
+                    <span>Export</span>
+                </button>
+                <div id="exportMenu"
+                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10">
+                    <div class="py-1">
+                        <a href="#" id="exportPdfBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as PDF</a>
+                        <a href="#" id="exportCsvBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as CSV</a>
+                    </div>
+                </div>
+            </div>
+            <c:if test='<%= "ADMIN".equals(role) %>'>
+                <button id="addCustomerBtn"
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
+                    <i data-feather="plus-circle" class="w-5 h-5"></i>
+                    <span>Add New Customer</span>
+                </button>
+            </c:if>
+        </div>
     </div>
 
     <!-- Customer List Card -->
@@ -205,19 +223,17 @@
 </div>
 
 
-<%-- All JavaScript template literals (backticks ` and ${}) MUST be escaped with a backslash (\) to prevent JSP parsing errors. --%>
 <script>
-    // Global variables for DOM elements (declared but not assigned immediately)
+    let currentCustomers = [];
+    let searchTimeout;
+
     let customerTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, customerModal,
         closeModalBtn, cancelFormBtn, customerForm, modalTitle, saveCustomerBtn;
 
-    // Form fields (declared but not not assigned immediately)
     let customerIdField, accountNumberField, nameField, addressField, phoneField, unitsConsumedField;
 
-    // Error message elements
     let accountNumberError, nameError, addressError, phoneError, unitsConsumedError;
 
-    // View Modal elements
     let customerViewModal, closeCustomerViewModalBtn, viewCustomerId, viewCustomerAccountNumber, viewCustomerName,
         viewCustomerAddress, viewCustomerPhone, viewCustomerUnitsConsumed, viewCustomerCreatedBy, viewCustomerCreatedAt,
         viewCustomerUpdatedBy, viewCustomerUpdatedAt;
@@ -228,7 +244,6 @@
 
     const showMessage = showToast;
 
-    // Function to fetch customers from the backend
     async function fetchCustomers(searchTerm = '') {
         console.log('Fetching customers with search term:', searchTerm);
         loadingIndicator.classList.remove('hidden');
@@ -247,7 +262,7 @@
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to fetch customers.');
             }
-
+            currentCustomers = data;
             renderCustomers(data);
             console.log('Customers fetched and rendered successfully.');
         } catch (error) {
@@ -259,7 +274,6 @@
         }
     }
 
-    // Function to render customers in the table
     function renderCustomers(customers) {
         customerTableBody.innerHTML = ''; // Clear existing rows
 
@@ -327,7 +341,6 @@
         feather.replace(); // Re-render feather icons
     }
 
-    // Function to clear all validation error messages
     function clearValidationErrors() {
         accountNumberError.classList.add('hidden');
         nameError.classList.add('hidden');
@@ -336,7 +349,6 @@
         unitsConsumedError.classList.add('hidden');
     }
 
-    // Function to validate the form fields
     function validateForm() {
         clearValidationErrors(); // Clear previous errors
         let isValid = true;
@@ -390,7 +402,6 @@
         return isValid;
     }
 
-    // Open Add Customer Modal
     function openAddModal() {
         console.log('Attempting to open Add Customer modal.');
         modalTitle.textContent = 'Add New Customer';
@@ -404,7 +415,6 @@
         console.log('Add Customer modal should be visible.');
     }
 
-    // Generate a simple 8-digit account number (YYMMDDXX)
     function generateAccountNumber() {
         const now = new Date();
         const year = String(now.getFullYear()).slice(-2);
@@ -415,7 +425,6 @@
         return year + month + day + random; // Example: 25080542
     }
 
-    // Close Modals
     function closeCustomerModal() {
         customerModal.classList.add('hidden');
         clearValidationErrors(); // Clear errors when closing
@@ -427,7 +436,6 @@
         console.log('Customer View modal closed.');
     }
 
-    // Open View Customer Modal
     async function openViewModal(accountNumber) {
         try {
             const response = await fetch(getContextPath() + '/customers?accountNumber=' + encodeURIComponent(accountNumber));
@@ -469,7 +477,59 @@
         }
     }
 
-    // Open Edit Customer Modal
+    function downloadCustomersAsPDF() {
+        if (currentCustomers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("Customer Report - Pahana Edu", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Report generated on: \${new Date().toLocaleDateString()}`, 14, 30);
+        const tableColumn = ["Account No.", "Name", "Phone", "Address", "Units Consumed", "Created At"];
+        const tableRows = [];
+        currentCustomers.forEach(cust => {
+            const custData = [
+                cust.accountNumber, cust.name, cust.phone, cust.address || '-', cust.unitsConsumed, new Date(cust.createdAt).toLocaleString('en-GB')
+            ];
+            tableRows.push(custData);
+        });
+        doc.autoTable({
+            startY: 38,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: {fillColor: [30, 30, 30]}
+        });
+        doc.save('PahanaEdu_Customers_Report.pdf');
+    }
+
+    function downloadCustomersAsCSV() {
+        if (currentCustomers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const headers = "AccountNumber,Name,Address,Phone,UnitsConsumed";
+        const csvRows = [headers];
+        currentCustomers.forEach(cust => {
+            const row = [`"\${cust.accountNumber}"`, `"\${cust.name}"`, `"\${cust.address || ''}"`, `"\${cust.phone}"`, cust.unitsConsumed];
+            csvRows.push(row.join(','));
+        });
+        const csvString = csvRows.join('\\n');
+        const blob = new Blob([csvString], {type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "PahanaEdu_Customers_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     async function openEditModal(accountNumber) {
         console.log('Attempting to open Edit Customer modal for account:', accountNumber);
         try {
@@ -498,7 +558,6 @@
         }
     }
 
-    // Handle form submission (Add/Edit)
     async function handleCustomerFormSubmit(e) {
         e.preventDefault(); // Prevent default form submission
         console.log('Customer form submitted.');
@@ -548,7 +607,6 @@
         }
     }
 
-    // Handle Delete Customer
     async function deleteCustomer(accountNumber) {
         if (!confirm('Are you sure you want to delete customer with Account Number: ' + accountNumber + '? This action cannot be undone.')) {
             console.log('Customer deletion cancelled.');
@@ -574,9 +632,6 @@
         }
     }
 
-    // Search functionality with debounce
-    let searchTimeout;
-
     function handleSearchInput() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -584,8 +639,6 @@
         }, 900); // Debounce for 900ms
     }
 
-    // --- Initialization Function ---
-    // This function will be called once the page is fully loaded
     function initCustomerPage() {
         console.log('initCustomerPage() called. Assigning DOM elements and attaching listeners.');
 
@@ -680,6 +733,31 @@
         console.log('Customer page initialization complete.');
     }
 
-    // Call the initialization function once the DOM is fully loaded
+    const exportBtn = document.getElementById('exportBtn');
+    const exportMenu = document.getElementById('exportMenu');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (exportMenu && !exportBtn.contains(e.target)) exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadCustomersAsPDF();
+        exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadCustomersAsCSV();
+        exportMenu.classList.add('hidden');
+    });
+
     document.addEventListener('DOMContentLoaded', initCustomerPage);
 </script>

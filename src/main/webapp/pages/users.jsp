@@ -19,24 +19,38 @@
 %>
 
 <div class="space-y-6">
-    <!-- Page Header -->
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
             <p class="text-gray-600">Manage user accounts and roles.</p>
         </div>
-        <c:if test="${sessionScope.role == 'ADMIN' && sessionScope.userId == 1}">
-
-            <button id="addUserBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 transition duration-200 ease-in-out shadow-md">
-                <i data-feather="user-plus" class="w-5 h-5"></i>
-                <span>Add New User</span>
-            </button>
-        </c:if>
-
+        <div class="flex items-center space-x-2">
+            <div class="relative inline-block text-left">
+                <button id="exportBtn"
+                        class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2 hover:bg-gray-50">
+                    <i data-feather="download" class="w-5 h-5"></i>
+                    <span>Export</span>
+                </button>
+                <div id="exportMenu"
+                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10">
+                    <div class="py-1">
+                        <a href="#" id="exportPdfBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as PDF</a>
+                        <a href="#" id="exportCsvBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as CSV</a>
+                    </div>
+                </div>
+            </div>
+            <c:if test="${sessionScope.userId == 1}">
+                <button id="addUserBtn"
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
+                    <i data-feather="user-plus" class="w-5 h-5"></i>
+                    <span>Add New User</span>
+                </button>
+            </c:if>
+        </div>
     </div>
 
-    <!-- User List Card -->
     <div class="bg-white rounded-lg shadow-md border border-gray-200">
         <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-4">
             <div class="relative flex-grow w-full sm:w-auto">
@@ -53,16 +67,13 @@
             </button>
         </div>
 
-        <!-- Loading Indicator -->
         <div id="loadingIndicator" class="text-center py-8 hidden">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
             <p class="text-gray-600">Loading users...</p>
         </div>
 
-        <!-- Message Display (Success/Error) - Included from separate file -->
         <jsp:include page="../components/messages.jsp"/>
 
-        <!-- Users Table -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -91,7 +102,6 @@
     </div>
 </div>
 
-<!-- Add & Edit User Modal (HTML embedded directly in this JSP) -->
 <div id="userModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative">
@@ -147,7 +157,8 @@
     </div>
 </div>
 
-<div id="userViewModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+<div id="userViewModal"
+     class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
         <button id="closeUserViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
@@ -176,11 +187,17 @@
         <div>
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Audit Information</h3>
             <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
-                <div class="flex justify-between"><span>Created By:</span> <strong id="viewCreatedByDisplay" class="text-gray-800"></strong></div>
-                <div class="flex justify-between"><span>Created At:</span> <strong id="viewCreatedAtDisplay" class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewCreatedByDisplay"
+                                                                                   class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewCreatedAtDisplay"
+                                                                                   class="text-gray-800"></strong></div>
                 <hr class="my-1">
-                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewUpdatedByDisplay" class="text-gray-800"></strong></div>
-                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewUpdatedAtDisplay" class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewUpdatedByDisplay"
+                                                                                        class="text-gray-800"></strong>
+                </div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewUpdatedAtDisplay"
+                                                                                        class="text-gray-800"></strong>
+                </div>
             </div>
         </div>
     </div>
@@ -188,29 +205,25 @@
 
 
 <script>
-    // Global variables for DOM elements (declared but not assigned immediately)
+    let currentUsers = [];
     let userTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, userModal, closeModalBtn,
         cancelFormBtn, userForm, modalTitle, saveUserBtn;
 
-    // Form fields
     let userIdField, usernameField, passwordField, confirmPasswordField, roleField;
 
-    // Error message elements
     let usernameError, passwordError, confirmPasswordError, roleError;
 
-    // View Modal elements
     let userViewModal, closeUserViewModalBtn, viewUserIdDisplay, viewUsernameDisplay, viewRoleDisplay,
         viewCreatedByDisplay, viewCreatedAtDisplay, viewUpdatedByDisplay, viewUpdatedAtDisplay;
 
 
-    // Get user role and ID from hidden inputs in dashboard.jsp
     const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
-    const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
+    const INITIAL_ADMIN_ID = 1;
+    let searchTimeout;
 
     const showMessage = showToast;
 
-    // Function to clear all validation error messages
     function clearValidationErrors() {
         usernameError.classList.add('hidden');
         passwordError.classList.add('hidden');
@@ -218,7 +231,6 @@
         roleError.classList.add('hidden');
     }
 
-    // Function to validate the form fields
     function validateForm(isEditMode) {
         clearValidationErrors(); // Clear previous errors
         let isValid = true;
@@ -258,7 +270,6 @@
         return isValid;
     }
 
-    // Function to fetch users from the backend
     async function fetchUsers(searchTerm = '') {
         console.log('Fetching users with search term:', searchTerm);
         loadingIndicator.classList.remove('hidden');
@@ -278,7 +289,7 @@
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to fetch users.');
             }
-
+            currentUsers = data;
             renderUsers(data);
             console.log('Users fetched and rendered successfully.');
         } catch (error) {
@@ -290,7 +301,6 @@
         }
     }
 
-    // Function to render users in the table
     function renderUsers(users) {
         userTableBody.innerHTML = ''; // Clear existing rows
 
@@ -380,7 +390,6 @@
         feather.replace();
     }
 
-    // Open Add User Modal
     function openAddModal() {
         console.log('Attempting to open Add User modal.');
         modalTitle.textContent = 'Add New User';
@@ -394,7 +403,6 @@
         console.log('Add User modal should be visible.');
     }
 
-    // Close Modals
     function closeUserModal() {
         userModal.classList.add('hidden');
         clearValidationErrors(); // Clear errors when closing
@@ -406,7 +414,6 @@
         console.log('User View modal closed.');
     }
 
-    // Open View User Modal
     async function openViewModal(userId) {
         console.log('Attempting to open View User modal for ID:', userId);
         try {
@@ -420,7 +427,6 @@
             viewUserIdDisplay.textContent = data.id;
             viewUsernameDisplay.textContent = data.username;
             viewRoleDisplay.textContent = data.role;
-            // Display usernames, which are now provided by the servlet
             viewCreatedByDisplay.textContent = data.createdBy || '-';
             viewCreatedAtDisplay.textContent = data.createdAt
                 ? new Date(data.createdAt).toLocaleDateString('en-GB', {
@@ -450,7 +456,6 @@
         }
     }
 
-    // Open Edit User Modal
     async function openEditModal(userId) {
         console.log('Attempting to open Edit User modal for ID:', userId);
         try {
@@ -487,7 +492,6 @@
         }
     }
 
-    // Handle form submission (Add/Edit)
     async function handleUserFormSubmit(e) {
         e.preventDefault(); // Prevent default form submission
         console.log('User form submitted.');
@@ -540,7 +544,6 @@
         }
     }
 
-    // Handle Delete User
     async function deleteUser(userId) {
         console.log('Attempting to delete user ID:', userId);
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -567,8 +570,58 @@
         }
     }
 
-    // Search functionality with debounce
-    let searchTimeout;
+    function downloadUsersAsPDF() {
+        if (currentUsers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("User Report - Pahana Edu", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Report generated on: \${new Date().toLocaleDateString()}`, 14, 30);
+        const tableColumn = ["ID", "Username", "Role", "Created At", "Created By"];
+        const tableRows = [];
+        currentUsers.forEach(user => {
+            const userData = [
+                user.id, user.username, user.role, new Date(user.createdAt).toLocaleDateString('en-GB'), user.createdBy || '-'
+            ];
+            tableRows.push(userData);
+        });
+        doc.autoTable({
+            startY: 38,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: {fillColor: [30, 30, 30]}
+        });
+        doc.save('PahanaEdu_Users_Report.pdf');
+    }
+
+    function downloadUsersAsCSV() {
+        if (currentUsers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const headers = "UserID,Username,Role,CreatedAt,CreatedBy";
+        const csvRows = [headers];
+        currentUsers.forEach(user => {
+            const row = [user.id, `"\${user.username}"`, user.role, `"\${new Date(user.createdAt).toISOString()}"`, `"\${user.createdBy || ''}"`];
+            csvRows.push(row.join(','));
+        });
+        const csvString = csvRows.join('\\n');
+        const blob = new Blob([csvString], {type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "PahanaEdu_Users_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     function handleSearchInput() {
         clearTimeout(searchTimeout);
@@ -577,8 +630,6 @@
         }, 900); // Debounce for 900ms
     }
 
-    // --- Initialization Function ---
-    // This function will be called once the page is fully loaded
     function initUserPage() {
         console.log('initUserPage() called. Assigning DOM elements and attaching listeners.');
 
@@ -667,6 +718,33 @@
         console.log('User page initialization complete.');
     }
 
-    // Call the initialization function once the DOM is fully loaded
+    const exportBtn = document.getElementById('exportBtn');
+    const exportMenu = document.getElementById('exportMenu');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (exportMenu && !exportBtn.contains(e.target)) exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadUsersAsPDF();
+        exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadUsersAsCSV();
+        exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('closeUserViewModalBtn').addEventListener('click', () => userViewModal.classList.add('hidden'));
+
     document.addEventListener('DOMContentLoaded', initUserPage);
 </script>

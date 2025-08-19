@@ -83,12 +83,30 @@
             <h1 class="text-2xl font-bold text-gray-800">Bill Management</h1>
             <p class="text-gray-600">Create new bills and manage past orders.</p>
         </div>
-        <c:if test='<%= "ADMIN".equals(role) %>'>
-            <button id="generateBillBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
-                <i data-feather="plus-circle" class="w-5 h-5"></i><span>Generate New Bill</span>
-            </button>
-        </c:if>
+        <div class="flex items-center space-x-2">
+            <div class="relative inline-block text-left">
+                <button id="exportBtn"
+                        class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2 hover:bg-gray-50">
+                    <i data-feather="download" class="w-5 h-5"></i>
+                    <span>Export</span>
+                </button>
+                <div id="exportMenu"
+                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10">
+                    <div class="py-1" role="menu" aria-orientation="vertical">
+                        <a href="#" id="exportPdfBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                           role="menuitem">Export as PDF</a>
+                        <a href="#" id="exportCsvBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                           role="menuitem">Export as CSV</a>
+                    </div>
+                </div>
+            </div>
+            <c:if test='<%= "ADMIN".equals(role) %>'>
+                <button id="generateBillBtn"
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
+                    <i data-feather="plus-circle" class="w-5 h-5"></i><span>Generate New Bill</span>
+                </button>
+            </c:if>
+        </div>
     </div>
 
     <div class="bg-white rounded-lg shadow-md border border-gray-200">
@@ -286,7 +304,7 @@
                 <i data-feather="printer" class="w-4 h-4"></i><span>Print Receipt</span>
             </button>
             <button id="downloadPdfBtn"
-                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2">
                 <i data-feather="download" class="w-4 h-4"></i><span>Download PDF</span>
             </button>
         </div>
@@ -295,7 +313,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- State, Constants & All Element References ---
+        let currentBills = [];
         let currentStep = 1, currentCustomer = null, currentBillItems = [], searchTimeout;
         let currentViewingBill = null;
         const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
@@ -517,6 +535,7 @@
                     throw new Error(error.message || 'Failed to fetch bills.');
                 }
                 const bills = await response.json();
+                currentBills = bills;
                 renderBills(bills);
             } catch (error) {
                 showMessage(error.message, 'error');
@@ -669,10 +688,101 @@
             doc.save(`PahanaEdu-Receipt-\${billData.id}.pdf`);
         }
 
+        function downloadBillsAsPDF() {
+            if (currentBills.length === 0) {
+                showMessage("No data to export.", "error");
+                return;
+            }
+            const {jsPDF} = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Bill Report - Pahana Edu", 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(`Report generated on: \${new Date().toLocaleDateString()}`, 14, 30);
+
+            const tableColumn = ["Bill ID", "Customer", "Total Amount (Rs.)", "Created By", "Created At"];
+            const tableRows = [];
+
+            currentBills.forEach(bill => {
+                const billData = [
+                    `#\${bill.id}`,
+                    bill.customerName || 'N/A',
+                    parseFloat(bill.totalAmount).toFixed(2),
+                    bill.generatedByUsername || 'N/A',
+                    new Date(bill.generatedAt).toLocaleString('en-GB')
+                ];
+                tableRows.push(billData);
+            });
+
+            doc.autoTable({
+                startY: 38,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: {fillColor: [30, 30, 30]}
+            });
+
+            doc.save('PahanaEdu_Bills_Report.pdf');
+        }
+
+        function downloadBillsAsCSV() {
+            if (currentBills.length === 0) {
+                showMessage("No data to export.", "error");
+                return;
+            }
+            const headers = "Bill ID,Customer,Total Amount,Created By,Created At";
+            const csvRows = [headers];
+
+            currentBills.forEach(bill => {
+                const row = [
+                    bill.id,
+                    `"\${bill.customerName || 'N/A'}"`, // Enclose names in quotes
+                    bill.totalAmount,
+                    `"\${bill.generatedByUsername || 'N/A'}"`,
+                    `"\${new Date(bill.generatedAt).toISOString()}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvString = csvRows.join('\\n');
+            const blob = new Blob([csvString], {type: 'text/csv;charset=utf-8;'});
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "PahanaEdu_Bills_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         // --- Event Listeners ---
         const billRefreshBtn = document.getElementById('billRefreshBtn');
         const billSearchInput = document.getElementById('billSearchInput');
         const generateBillBtn = document.getElementById('generateBillBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const exportMenu = document.getElementById('exportMenu');
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                exportMenu.classList.toggle('hidden');
+                feather.replace(); // Re-render icons if needed
+            });
+        }
+
+        document.getElementById('exportPdfBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            downloadBillsAsPDF();
+            exportMenu.classList.add('hidden');
+        });
+
+        document.getElementById('exportCsvBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            downloadBillsAsCSV();
+            exportMenu.classList.add('hidden');
+        });
 
         if (generateBillBtn) {
             generateBillBtn.addEventListener('click', () => {
