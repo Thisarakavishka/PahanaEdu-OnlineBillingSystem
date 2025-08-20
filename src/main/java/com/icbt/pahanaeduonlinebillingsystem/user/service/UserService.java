@@ -4,6 +4,7 @@ import com.icbt.pahanaeduonlinebillingsystem.user.dto.UserDTO;
 import com.icbt.pahanaeduonlinebillingsystem.common.base.CrudService;
 
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author Thisara Kavishka
@@ -16,4 +17,7 @@ public interface UserService extends CrudService<UserDTO> {
 
     UserDTO searchByUsername(String username) throws SQLException, ClassNotFoundException;
 
+    List<UserDTO> getAllDeletedUsers() throws SQLException, ClassNotFoundException;
+
+    boolean restoreUser(int id) throws SQLException, ClassNotFoundException;
 }

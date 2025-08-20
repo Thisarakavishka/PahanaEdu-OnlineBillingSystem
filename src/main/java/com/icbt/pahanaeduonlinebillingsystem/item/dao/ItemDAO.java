@@ -5,6 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.item.entity.ItemEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author Thisara Kavishka
@@ -20,4 +21,10 @@ public interface ItemDAO extends CrudDAO<ItemEntity> {
     ItemEntity searchByName(Connection connection, String name) throws SQLException, ClassNotFoundException;
 
     int getItemsCount(Connection connection) throws SQLException, ClassNotFoundException;
+
+    List<ItemEntity> getAllDeletedItems(Connection connection) throws SQLException;
+
+    boolean restoreItem(Connection connection, int id) throws SQLException;
+
+    ItemEntity searchDeletedById(Connection connection, int id) throws SQLException;
 }

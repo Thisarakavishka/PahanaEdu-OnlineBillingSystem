@@ -5,6 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author Thisara Kavishka
@@ -24,4 +25,10 @@ public interface CustomerDAO extends CrudDAO<CustomerEntity> {
     CustomerEntity searchByPhone(Connection connection, String phone) throws SQLException, ClassNotFoundException;
 
     int getCustomersCount(Connection connection) throws SQLException, ClassNotFoundException;
+
+    List<CustomerEntity> getAllDeletedCustomers(Connection connection) throws SQLException;
+
+    boolean restoreCustomer(Connection connection, int id) throws SQLException;
+
+    CustomerEntity searchDeletedById(Connection connection, int id) throws SQLException;
 }

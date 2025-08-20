@@ -9,10 +9,7 @@ import com.icbt.pahanaeduonlinebillingsystem.item.dao.ItemDAO;
 import com.icbt.pahanaeduonlinebillingsystem.item.entity.ItemEntity;
 import com.icbt.pahanaeduonlinebillingsystem.item.mapper.ItemMapper;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -188,5 +185,46 @@ public class ItemDAOImpl implements ItemDAO {
         return items;
     }
 
+    @Override
+    public List<ItemEntity> getAllDeletedItems(Connection connection) throws SQLException {
+        List<ItemEntity> items = new ArrayList<>();
+        String sql = "SELECT * FROM items WHERE deleted_at IS NOT NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql);
+            while (resultSet.next()) {
+                items.add(ItemMapper.mapResultSetToItemEntity(resultSet));
+            }
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+        return items;
+    }
 
+    @Override
+    public boolean restoreItem(Connection connection, int id) throws SQLException {
+        String sql = "UPDATE items SET deleted_at = NULL, deleted_by = NULL WHERE id = ?";
+        try {
+            return DAOUtil.executeUpdate(connection, sql, id);
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("Failed to restore item.", e);
+        }
+    }
+
+    @Override
+    public ItemEntity searchDeletedById(Connection connection, int id) throws SQLException {
+        String sql = "SELECT * FROM items WHERE id = ? AND deleted_at IS NOT NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql, id);
+            if (resultSet.next()) {
+                return ItemMapper.mapResultSetToItemEntity(resultSet);
+            }
+            return null;
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("DAO utility failed during searchDeletedById", e);
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
 }
