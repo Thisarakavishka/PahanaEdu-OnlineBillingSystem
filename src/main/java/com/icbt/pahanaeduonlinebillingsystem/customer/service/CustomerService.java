@@ -4,6 +4,7 @@ import com.icbt.pahanaeduonlinebillingsystem.customer.dto.CustomerDTO;
 import com.icbt.pahanaeduonlinebillingsystem.common.base.CrudService;
 
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author Thisara Kavishka
@@ -17,4 +18,8 @@ public interface CustomerService extends CrudService<CustomerDTO> {
     CustomerDTO searchByPhone(String phone) throws SQLException, ClassNotFoundException;
 
     int getCustomersCount() throws SQLException, ClassNotFoundException;
+
+    List<CustomerDTO> getAllDeletedCustomers() throws SQLException, ClassNotFoundException;
+
+    boolean restoreCustomer(int id) throws SQLException, ClassNotFoundException;
 }

@@ -8,10 +8,7 @@ import com.icbt.pahanaeduonlinebillingsystem.user.converter.UserMapper;
 import com.icbt.pahanaeduonlinebillingsystem.user.dao.UserDAO;
 import com.icbt.pahanaeduonlinebillingsystem.user.entity.UserEntity;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -176,4 +173,42 @@ public class UserDAOImpl implements UserDAO {
         return users;
     }
 
+    @Override
+    public List<UserEntity> getAllDeletedUsers(Connection connection) throws SQLException {
+        List<UserEntity> users = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE deleted_at IS NOT NULL";
+        try (PreparedStatement pst = connection.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                users.add(UserMapper.mapResultSetToUserEntity(rs));
+            }
+        }
+        return users;
+    }
+
+    @Override
+    public boolean restoreUser(Connection connection, int id) throws SQLException {
+        String sql = "UPDATE users SET deleted_at = NULL, deleted_by = NULL WHERE id = ?";
+        try {
+            return DAOUtil.executeUpdate(connection, sql, id);
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("Failed to restore user.", e);
+        }
+    }
+
+    @Override
+    public UserEntity searchDeletedById(Connection connection, int id) throws SQLException {
+        String sql = "SELECT * FROM users WHERE id = ? AND deleted_at IS NOT NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql, id);
+            if (resultSet.next()) {
+                return UserMapper.mapResultSetToUserEntity(resultSet);
+            }
+            return null;
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("DAO utility failed during searchDeletedById", e);
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
 }

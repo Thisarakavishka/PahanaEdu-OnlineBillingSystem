@@ -250,4 +250,34 @@ public class CustomerServiceImpl implements CustomerService {
             DBUtil.closeConnection(connection);
         }
     }
+
+    @Override
+    public List<CustomerDTO> getAllDeletedCustomers() throws ClassNotFoundException {
+        Connection connection = null;
+        try {
+            connection = DBUtil.getConnection();
+            List<CustomerEntity> customerEntityList = customerDAO.getAllDeletedCustomers(connection);
+            return CustomerMapper.toDTOList(customerEntityList);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during get all deleted customers: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        } finally {
+            DBUtil.closeConnection(connection);
+        }
+    }
+
+    @Override
+    public boolean restoreCustomer(int id) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            CustomerEntity customerToRestore = customerDAO.searchById(connection, id);
+            CustomerEntity deletedCustomerRecord = customerDAO.searchDeletedById(connection, id);
+
+            if (customerDAO.searchByPhone(connection, deletedCustomerRecord.getPhone()) != null) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_ALREADY_EXISTS);
+            }
+            return customerDAO.restoreCustomer(connection, id);
+        } catch (SQLException e) {
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
 }
