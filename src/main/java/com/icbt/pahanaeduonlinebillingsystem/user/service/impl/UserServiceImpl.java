@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LogUtil.getLogger(UserServiceImpl.class);
     private final UserDAO userDAO;
-    private static final int INITIAL_ADMIN_ID = 1; // Assuming the first user inserted gets ID 1
+    private static final int INITIAL_ADMIN_ID = 1;
 
     public UserServiceImpl() {
         this.userDAO = new UserDAOImpl();
@@ -233,6 +233,48 @@ public class UserServiceImpl implements UserService {
             throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         } finally {
             DBUtil.closeConnection(connection);
+        }
+    }
+
+    @Override
+    public List<UserDTO> getAllDeletedUsers() throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            List<UserEntity> userEntities = userDAO.getAllDeletedUsers(connection);
+            return UserMapper.toDTOList(userEntities);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during get all deleted users: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public boolean restoreUser(int id) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            connection.setAutoCommit(false); // Use a transaction
+
+            // 1. Find the record of the user who was deleted.
+            UserEntity deletedUserRecord = userDAO.searchDeletedById(connection, id);
+            if (deletedUserRecord == null) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_NOT_FOUND);
+            }
+
+            // 2. Business logic: Check if another active user has taken their username.
+            if (userDAO.searchByUsername(connection, deletedUserRecord.getUsername()) != null) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.USER_ALREADY_EXISTS);
+            }
+
+            // 3. If clear, perform the restore.
+            boolean isRestored = userDAO.restoreUser(connection, id);
+            if (isRestored) {
+                connection.commit();
+                LOGGER.info("User with ID " + id + " restored successfully.");
+            } else {
+                connection.rollback();
+            }
+            return isRestored;
+
+        } catch (SQLException e) {
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
         }
     }
 }

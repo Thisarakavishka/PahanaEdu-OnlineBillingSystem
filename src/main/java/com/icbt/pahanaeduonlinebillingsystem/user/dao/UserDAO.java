@@ -5,6 +5,7 @@ import com.icbt.pahanaeduonlinebillingsystem.user.entity.UserEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author Thisara Kavishka
@@ -18,4 +19,10 @@ public interface UserDAO extends CrudDAO<UserEntity> {
     UserEntity authenticateUser(Connection connection, String username, String hashedPassword, String salt) throws SQLException, ClassNotFoundException;
 
     int getUsersCount(Connection connection) throws SQLException, ClassNotFoundException;
+
+    List<UserEntity> getAllDeletedUsers(Connection connection) throws SQLException;
+
+    boolean restoreUser(Connection connection, int id) throws SQLException;
+
+    UserEntity searchDeletedById(Connection connection, int id) throws SQLException;
 }
