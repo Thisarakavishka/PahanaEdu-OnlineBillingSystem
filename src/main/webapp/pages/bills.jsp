@@ -100,12 +100,10 @@
                     </div>
                 </div>
             </div>
-            <c:if test='<%= "ADMIN".equals(role) %>'>
                 <button id="generateBillBtn"
                         class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
                     <i data-feather="plus-circle" class="w-5 h-5"></i><span>Generate New Bill</span>
                 </button>
-            </c:if>
         </div>
     </div>
 

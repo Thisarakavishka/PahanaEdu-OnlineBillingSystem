@@ -6,11 +6,15 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    String role = (String) session.getAttribute("role");
+%>
 
 <div class="space-y-8">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4 border-l-4 border-indigo-500">
-            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><i data-feather="dollar-sign" class="w-6 h-6"></i></div>
+            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full"><i data-feather="dollar-sign"
+                                                                           class="w-6 h-6"></i></div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Total Revenue</p>
                 <p id="totalRevenue" class="text-2xl font-bold text-gray-800">...</p>
@@ -24,14 +28,16 @@
             </div>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4 border-l-4 border-green-500">
-            <div class="bg-green-100 text-green-600 p-3 rounded-full"><i data-feather="package" class="w-6 h-6"></i></div>
+            <div class="bg-green-100 text-green-600 p-3 rounded-full"><i data-feather="package" class="w-6 h-6"></i>
+            </div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Items in Stock</p>
                 <p id="totalItems" class="text-2xl font-bold text-gray-800">...</p>
             </div>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4 border-l-4 border-yellow-500">
-            <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full"><i data-feather="file-text" class="w-6 h-6"></i></div>
+            <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full"><i data-feather="file-text" class="w-6 h-6"></i>
+            </div>
             <div>
                 <p class="text-sm text-gray-500 font-medium">Bills Generated</p>
                 <p id="totalBills" class="text-2xl font-bold text-gray-800">...</p>
@@ -42,28 +48,50 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Weekly Sales Activity</h3>
-            <div class="h-80"><canvas id="weeklySalesChart"></canvas></div>
+            <div class="h-80">
+                <canvas id="weeklySalesChart"></canvas>
+            </div>
         </div>
 
         <div class="lg:col-span-1 space-y-8">
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
                 <div class="space-y-3">
-                    <a href="dashboard.jsp?page=bills" class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"><i data-feather="plus-circle" class="w-5 h-5"></i><span>Generate New Bill</span></a>
-                    <a href="dashboard.jsp?page=customers" class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"><i data-feather="user-plus" class="w-5 h-5 text-gray-700"></i><span>Add New Customer</span></a>
+                    <a href="dashboard.jsp?page=bills"
+                       class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"><i
+                            data-feather="plus-circle" class="w-5 h-5"></i><span>Generate New Bill</span></a>
+                    <% if ("ADMIN".equals(role)) { %>
+                    <a href="dashboard.jsp?page=customers"
+                       class="w-full flex items-center space-x-3 p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                        <i data-feather="user-plus" class="w-5 h-5 text-gray-700"></i><span>Add New Customer</span>
+                    </a>
+                    <% } %>
                 </div>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Bills</h3>
-                <div class="overflow-y-auto h-48"><table class="min-w-full"><tbody id="recentBillsTableBody" class="divide-y divide-gray-200"></tbody></table></div>
+                <div class="overflow-y-auto h-48">
+                    <table class="min-w-full">
+                        <tbody id="recentBillsTableBody" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top Selling Items</h3><ul id="topItemsList" class="space-y-3"></ul></div>
-        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top Customers</h3><ul id="topCustomersList" class="space-y-3"></ul></div>
-        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top Performing Users</h3><ul id="topUsersList" class="space-y-3"></ul></div>
+        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top Selling
+            Items</h3>
+            <ul id="topItemsList" class="space-y-3"></ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top
+            Customers</h3>
+            <ul id="topCustomersList" class="space-y-3"></ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md"><h3 class="text-xl font-semibold text-gray-800 mb-4">Top
+            Performing Users</h3>
+            <ul id="topUsersList" class="space-y-3"></ul>
+        </div>
     </div>
 </div>
 
@@ -92,7 +120,7 @@
                 d.setDate(d.getDate() - i);
 
                 const dateString = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
-                const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' }); // "Mon", "Tue", etc.
+                const dayLabel = d.toLocaleDateString('en-US', {weekday: 'short'}); // "Mon", "Tue", etc.
 
                 labels.push(dayLabel);
                 dataPoints.push(salesMap.get(dateString) || 0); // Use sale total, or 0 if no sales on that day
@@ -118,8 +146,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } },
-                    plugins: { legend: { display: false } }
+                    scales: {y: {beginAtZero: true}},
+                    plugins: {legend: {display: false}}
                 }
             });
         }

@@ -101,14 +101,22 @@
                         const row = document.createElement('tr');
                         row.className = 'hover:bg-gray-50';
                         const actionButton = canRestore
-                            ? `<button class="font-semibold text-green-600 hover:text-green-800 restore-btn flex text-center" data-id="\${user.id}" data-type="user">Restore</button>`
+                            ? `<button class="font-semibold text-green-600 hover:text-green-800 restore-btn inline-block mx-auto" data-id="\${user.id}" data-type="user">Restore</button>`
                             : 'View Only';
 
                         let rowHtml = '';
-                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">#\${user.id}</td>`;
+                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${user.id}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm font-medium text-gray-800">\${user.username}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${user.role}</td>`;
-                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${new Date(user.deletedAt).toLocaleString('en-GB')}</td>`;
+                        rowHtml += '<td class="px-4 py-3 text-sm text-gray-600">' +
+                            (user.deletedAt
+                                ? new Date(user.deletedAt).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                                : '-') +
+                            '</td>';
                         rowHtml += `<td class="px-4 py-3 text-center">\${actionButton}</td>`;
                         row.innerHTML = rowHtml;
                         tbody.appendChild(row);
@@ -127,7 +135,15 @@
                         rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${cust.accountNumber}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm font-medium text-gray-800">\${cust.name}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${cust.phone}</td>`;
-                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${new Date(cust.deletedAt).toLocaleString('en-GB')}</td>`;
+                        rowHtml += '<td class="px-4 py-3 text-sm text-gray-600">' +
+                            (cust.deletedAt
+                                ? new Date(cust.deletedAt).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                                : '-') +
+                            '</td>';
                         rowHtml += `<td class="px-4 py-3 text-center">\${actionButton}</td>`;
                         row.innerHTML = rowHtml;
                         tbody.appendChild(row);
@@ -143,10 +159,18 @@
                             : 'N/A';
 
                         let rowHtml = '';
-                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">#\${item.id}</td>`;
+                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${item.id}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm font-medium text-gray-800">\${item.name}</td>`;
                         rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">Rs. \${parseFloat(item.unitPrice).toFixed(2)}</td>`;
-                        rowHtml += `<td class="px-4 py-3 text-sm text-gray-600">\${new Date(item.deletedAt).toLocaleString('en-GB')}</td>`;
+                        rowHtml += '<td class="px-4 py-3 text-sm text-gray-600">' +
+                            (item.deletedAt
+                                ? new Date(item.deletedAt).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                                : '-') +
+                            '</td>';
                         rowHtml += `<td class="px-4 py-3 text-center">\${actionButton}</td>`;
                         row.innerHTML = rowHtml;
                         tbody.appendChild(row);
