@@ -9,10 +9,7 @@ import com.icbt.pahanaeduonlinebillingsystem.customer.dao.CustomerDAO;
 import com.icbt.pahanaeduonlinebillingsystem.customer.entity.CustomerEntity;
 import com.icbt.pahanaeduonlinebillingsystem.customer.mapper.CustomerMapper;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +24,6 @@ import java.util.logging.Logger;
 public class CustomerDAOImpl implements CustomerDAO {
 
     private static final Logger LOGGER = LogUtil.getLogger(CustomerDAOImpl.class);
-
 
     @Override
     public boolean add(Connection connection, CustomerEntity entity) throws SQLException, ClassNotFoundException {
@@ -215,4 +211,57 @@ public class CustomerDAOImpl implements CustomerDAO {
         }
     }
 
+    @Override
+    public int getCustomersCount(Connection connection) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(id) FROM customers WHERE deleted_at IS NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql);
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
+
+    @Override
+    public List<CustomerEntity> getAllDeletedCustomers(Connection connection) throws SQLException {
+        List<CustomerEntity> customers = new ArrayList<>();
+        String sql = "SELECT * FROM customers WHERE deleted_at IS NOT NULL";
+        try (PreparedStatement pst = connection.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) {
+                customers.add(CustomerMapper.mapResultSetToCustomerEntity(rs));
+            }
+        }
+        return customers;
+    }
+
+    @Override
+    public boolean restoreCustomer(Connection connection, int id) throws SQLException {
+        String sql = "UPDATE customers SET deleted_at = NULL, deleted_by = NULL WHERE id = ?";
+        try {
+            return DAOUtil.executeUpdate(connection, sql, id);
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("Failed to restore customer.", e);
+        }
+    }
+
+    @Override
+    public CustomerEntity searchDeletedById(Connection connection, int id) throws SQLException {
+        String sql = "SELECT * FROM customers WHERE id = ? AND deleted_at IS NOT NULL";
+        ResultSet resultSet = null;
+        try {
+            resultSet = DAOUtil.executeQuery(connection, sql, id);
+            if (resultSet.next()) {
+                return CustomerMapper.mapResultSetToCustomerEntity(resultSet);
+            }
+            return null;
+        } catch (PahanaEduOnlineBillingSystemException e) {
+            throw new SQLException("DAO utility failed during searchDeletedById", e);
+        } finally {
+            DBUtil.closeResultSet(resultSet);
+        }
+    }
 }

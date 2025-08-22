@@ -7,7 +7,6 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
-<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <%
     String role = (String) session.getAttribute("role");
@@ -20,13 +19,31 @@
             <h1 class="text-2xl font-bold text-gray-800">Item Management</h1>
             <p class="text-gray-600">Manage products, prices, and stock quantities.</p>
         </div>
-        <c:if test='<%= "ADMIN".equals(role) %>'>
-            <button id="addItemBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 transition duration-200 ease-in-out shadow-md">
-                <i data-feather="plus-circle" class="w-5 h-5"></i>
-                <span>Add New Item</span>
-            </button>
-        </c:if>
+        <div class="flex items-center space-x-2">
+            <div class="relative inline-block text-left">
+                <button id="exportBtn"
+                        class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2 hover:bg-gray-50">
+                    <i data-feather="download" class="w-5 h-5"></i>
+                    <span>Export</span>
+                </button>
+                <div id="exportMenu"
+                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10">
+                    <div class="py-1" role="menu" aria-orientation="vertical">
+                        <a href="#" id="exportPdfBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                           role="menuitem">Export as PDF</a>
+                        <a href="#" id="exportCsvBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                           role="menuitem">Export as CSV</a>
+                    </div>
+                </div>
+            </div>
+            <c:if test='<%= "ADMIN".equals(role) %>'>
+                <button id="addItemBtn"
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
+                    <i data-feather="plus-circle" class="w-5 h-5"></i>
+                    <span>Add New Item</span>
+                </button>
+            </c:if>
+        </div>
     </div>
 
     <!-- Item List Card -->
@@ -135,64 +152,54 @@
 <!-- View Item Modal -->
 <div id="itemViewModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
-
-        <!-- Close Button -->
-        <button id="closeItemViewModalBtn"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
+        <button id="closeItemViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
 
-        <!-- Title -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Item Details</h2>
-
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Item ID</label>
-                <p id="viewItemId" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="flex items-center space-x-4 mb-6 border-b pb-4">
+            <div class="bg-gray-800 text-white rounded-full p-3">
+                <i data-feather="package" class="w-6 h-6"></i>
             </div>
-
             <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Item Name</label>
-                <p id="viewItemName" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+                <h2 id="viewItemName" class="text-2xl font-bold text-gray-800">Item Name</h2>
+                <p class="text-gray-500">Details and audit information</p>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Unit Price</label>
-                <p id="viewItemUnitPrice" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">ITEM ID</label>
+                <p id="viewItemId" class="text-lg font-bold text-gray-800"></p>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Stock Quantity</label>
-                <p id="viewItemStockQuantity" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">UNIT PRICE</label>
+                <p id="viewItemUnitPrice" class="text-lg font-bold text-gray-800"></p>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created By</label>
-                <p id="viewItemCreatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+            <div class="bg-gray-50 p-4 rounded-lg border">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">STOCK QUANTITY</label>
+                <p id="viewItemStockQuantity" class="text-lg font-bold text-gray-800"></p>
             </div>
+        </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Created At</label>
-                <p id="viewItemCreatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Audit Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewItemCreatedBy"
+                                                                                   class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewItemCreatedAt"
+                                                                                   class="text-gray-800"></strong></div>
+                <hr>
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewItemUpdatedBy"
+                                                                                        class="text-gray-800"></strong>
+                </div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewItemUpdatedAt"
+                                                                                        class="text-gray-800"></strong>
+                </div>
             </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated By</label>
-                <p id="viewItemUpdatedBy" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Last Updated At</label>
-                <p id="viewItemUpdatedAt" class="px-3 py-2 bg-gray-50 rounded-md border text-gray-800 text-sm"></p>
-            </div>
-
         </div>
     </div>
 </div>
-
 <!-- Restock Item Modal -->
 <div id="restockModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
@@ -239,46 +246,29 @@
 
 
 <script>
-    // Global variables for DOM elements (declared but not assigned immediately)
+    let currentItems = [];
+
     let itemTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, itemModal, closeModalBtn,
         cancelFormBtn, itemForm, modalTitle, saveItemBtn;
 
-    // Form fields
     let itemIdField, nameField, unitPriceField, stockQuantityField;
 
-    // Error message elements
     let nameError, unitPriceError, stockQuantityError;
 
-    // View Modal elements
     let itemViewModal, closeItemViewModalBtn, viewItemId, viewItemName, viewItemUnitPrice, viewItemStockQuantity,
         viewItemCreatedBy, viewItemCreatedAt, viewItemUpdatedBy, viewItemUpdatedAt;
 
-    // Restock Modal elements
     let restockModal, closeRestockModalBtn, cancelRestockFormBtn, restockForm, restockItemId, restockItemName,
         restockItemNameDisplay, restockItemUnitPrice, restockItemCurrentStock, quantityToAddField, quantityToAddError,
         saveRestockBtn;
 
-    // Get user role and ID from hidden inputs in dashboard.jsp
     const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
     const INITIAL_ADMIN_ID = 1;
+    let searchTimeout;
 
-    // Function to display messages (success/error)
-    function showMessage(message, type = 'success') {
-        messageText.textContent = message;
-        messageDisplay.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-        if (type === 'success') {
-            messageDisplay.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-        } else {
-            messageDisplay.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-        }
-        messageDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            messageDisplay.classList.add('hidden');
-        }, 5000); // Hide after 5 seconds
-    }
+    const showMessage = showToast;
 
-    // Function to fetch items from the backend
     async function fetchItems(searchTerm = '') {
         console.log('Fetching items with search term:', searchTerm);
         loadingIndicator.classList.remove('hidden');
@@ -296,7 +286,7 @@
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to fetch items.');
             }
-
+            currentItems = data;
             renderItems(data);
             console.log('Items fetched and rendered successfully.');
         } catch (error) {
@@ -308,9 +298,8 @@
         }
     }
 
-    // Function to render items in the table
     function renderItems(items) {
-        itemTableBody.innerHTML = ''; // Clear existing rows
+        itemTableBody.innerHTML = '';
 
         if (items.length === 0) {
             itemTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No items found.</td></tr>';
@@ -389,31 +378,26 @@
             itemTableBody.appendChild(row);
         });
 
-        feather.replace(); // Re-render feather icons
+        feather.replace();
     }
 
-    // Function to clear all validation error messages
     function clearValidationErrors() {
         nameError.classList.add('hidden');
         unitPriceError.classList.add('hidden');
         stockQuantityError.classList.add('hidden');
-        // Restock modal error
         if (quantityToAddError) quantityToAddError.classList.add('hidden');
     }
 
-    // Function to validate the form fields (Add/Edit Item)
     function validateForm() {
-        clearValidationErrors(); // Clear previous errors
+        clearValidationErrors();
         let isValid = true;
 
-        // Name Validation
         if (nameField.value.trim() === '') {
             nameError.textContent = 'Item name is required.';
             nameError.classList.remove('hidden');
             isValid = false;
         }
 
-        // Unit Price Validation
         const unitPrice = parseFloat(unitPriceField.value);
         if (isNaN(unitPrice) || unitPrice < 0) {
             unitPriceError.textContent = 'Unit price must be a non-negative number.';
@@ -421,7 +405,6 @@
             isValid = false;
         }
 
-        // Stock Quantity Validation
         const stockQuantity = parseInt(stockQuantityField.value);
         if (isNaN(stockQuantity) || stockQuantity < 0) {
             stockQuantityError.textContent = 'Stock quantity must be a non-negative integer.';
@@ -432,7 +415,6 @@
         return isValid;
     }
 
-    // Function to validate restock form
     function validateRestockForm() {
         if (quantityToAddError) quantityToAddError.classList.add('hidden');
         let isValid = true;
@@ -445,21 +427,19 @@
         return isValid;
     }
 
-    // Open Add Item Modal
     function openAddModal() {
         console.log('Attempting to open Add Item modal.');
         modalTitle.textContent = 'Add New Item';
-        itemForm.reset(); // Clear form fields
-        itemIdField.value = ''; // Ensure ID is empty for new item
-        clearValidationErrors(); // Clear errors when opening
+        itemForm.reset();
+        itemIdField.value = '';
+        clearValidationErrors();
         itemModal.classList.remove('hidden');
         console.log('Add Item modal should be visible.');
     }
 
-    // Close Modals
     function closeItemModal() {
         itemModal.classList.add('hidden');
-        clearValidationErrors(); // Clear errors when closing
+        clearValidationErrors();
         console.log('Item modal closed.');
     }
 
@@ -470,11 +450,10 @@
 
     function closeRestockModal() {
         restockModal.classList.add('hidden');
-        clearValidationErrors(); // Clear errors when closing
+        clearValidationErrors();
         console.log('Restock modal closed.');
     }
 
-    // Open View Item Modal
     async function openViewModal(itemId) {
         console.log('Attempting to open View Item modal for ID:', itemId);
         try {
@@ -489,7 +468,6 @@
             viewItemName.textContent = data.name;
             viewItemUnitPrice.textContent = 'Rs. ' + parseFloat(data.unitPrice).toFixed(2);
             viewItemStockQuantity.textContent = data.stockQuantity + ' units';
-            // Display usernames, which are now provided by the servlet
             viewItemCreatedBy.textContent = data.createdBy || '-';
             viewItemCreatedAt.textContent = data.createdAt
                 ? new Date(data.createdAt).toLocaleDateString('en-GB', {
@@ -519,7 +497,6 @@
         }
     }
 
-    // Open Edit Item Modal
     async function openEditModal(itemId) {
         console.log('Attempting to open Edit Item modal for ID:', itemId);
         try {
@@ -533,10 +510,10 @@
             modalTitle.textContent = 'Edit Item';
             itemIdField.value = data.id;
             nameField.value = data.name;
-            unitPriceField.value = parseFloat(data.unitPrice).toFixed(2); // Ensure correct number format
+            unitPriceField.value = parseFloat(data.unitPrice).toFixed(2);
             stockQuantityField.value = data.stockQuantity;
 
-            clearValidationErrors(); // Clear errors when opening
+            clearValidationErrors();
             itemModal.classList.remove('hidden');
             console.log('Edit Item modal should be visible with data:', data);
         } catch (error) {
@@ -545,7 +522,6 @@
         }
     }
 
-    // Open Restock Modal
     async function openRestockModal(itemId) {
         console.log('Attempting to open Restock modal for ID:', itemId);
         try {
@@ -557,12 +533,12 @@
             }
 
             restockItemId.value = data.id;
-            restockItemName.value = data.name; // Hidden field
-            restockItemNameDisplay.value = data.name; // Display field
-            restockItemUnitPrice.value = data.unitPrice; // Store original price
-            restockItemCurrentStock.value = data.stockQuantity; // Store current stock
-            quantityToAddField.value = 1; // Default to 1
-            clearValidationErrors(); // Clear errors when opening
+            restockItemName.value = data.name;
+            restockItemNameDisplay.value = data.name;
+            restockItemUnitPrice.value = data.unitPrice;
+            restockItemCurrentStock.value = data.stockQuantity;
+            quantityToAddField.value = 1;
+            clearValidationErrors();
             restockModal.classList.remove('hidden');
             console.log('Restock modal should be visible with data:', data);
         } catch (error) {
@@ -571,15 +547,13 @@
         }
     }
 
-    // Handle form submission (Add/Edit Item)
     async function handleItemFormSubmit(e) {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
         console.log('Item form submitted.');
 
-        // Run frontend validation
         if (!validateForm()) {
             console.log('Frontend validation failed.');
-            return; // Stop submission if validation fails
+            return;
         }
 
         const isEdit = itemIdField.value !== '';
@@ -588,10 +562,10 @@
 
         const formData = new URLSearchParams();
         if (isEdit) {
-            formData.append('action', 'update'); // Action for update
+            formData.append('action', 'update');
             formData.append('id', itemIdField.value);
         } else {
-            formData.append('action', 'add'); // Action for add
+            formData.append('action', 'add');
         }
         formData.append('name', nameField.value);
         formData.append('unitPrice', unitPriceField.value);
@@ -612,8 +586,8 @@
             }
 
             showMessage(data.message, 'success');
-            closeItemModal(); // Close modal
-            fetchItems(searchInput.value); // Refresh list
+            closeItemModal();
+            fetchItems(searchInput.value);
             console.log('Item ' + (isEdit ? 'updated' : 'added') + ' successfully.');
         } catch (error) {
             console.error('Error ' + (isEdit ? 'updating' : 'adding') + ' item:', error);
@@ -621,7 +595,6 @@
         }
     }
 
-    // Handle Restock form submission
     async function handleRestockSubmit(e) {
         e.preventDefault();
         console.log('Restock form submitted.');
@@ -631,20 +604,17 @@
             return;
         }
 
-        const url = getContextPath() + '/items'; // Same endpoint, different action
+        const url = getContextPath() + '/items';
         const quantityToAdd = parseInt(quantityToAddField.value);
-        // const currentStock = parseInt(restockItemCurrentStock.value); // Not needed for sending
-        // const newStockQuantity = currentStock + quantityToAdd; // Not needed for sending
 
         const formData = new URLSearchParams();
-        formData.append('action', 'restock'); // Custom action for restock
+        formData.append('action', 'restock');
         formData.append('id', restockItemId.value);
-        // We only need to send the ID and the quantity to add for restock
-        formData.append('quantityToAdd', quantityToAddField.value); // Send the actual quantity to add
+        formData.append('quantityToAdd', quantityToAddField.value);
 
         try {
             const response = await fetch(url, {
-                method: 'PUT', // Restock is an update operation
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
@@ -666,12 +636,11 @@
         }
     }
 
-    // Handle Delete Item
     async function deleteItem(itemId) {
         console.log('Attempting to delete item ID:', itemId);
         if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
             console.log('Item deletion cancelled.');
-            return; // User cancelled
+            return;
         }
 
         try {
@@ -685,7 +654,7 @@
             }
 
             showMessage(data.message, 'success');
-            fetchItems(searchInput.value); // Refresh list
+            fetchItems(searchInput.value);
             console.log('Item deleted successfully.');
         } catch (error) {
             console.error('Error deleting item:', error);
@@ -693,22 +662,86 @@
         }
     }
 
-    // Search functionality with debounce
-    let searchTimeout;
+    function downloadItemsAsPDF() {
+        if (currentItems.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("Item Inventory Report - Pahana Edu", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Report generated on: \${new Date().toLocaleDateString()}`, 14, 30);
+
+        const tableColumn = ["ID", "Name", "Unit Price (Rs.)", "Stock Quantity", "Created At"];
+        const tableRows = [];
+
+        currentItems.forEach(item => {
+            const itemData = [
+                item.id,
+                item.name,
+                parseFloat(item.unitPrice).toFixed(2),
+                item.stockQuantity,
+                new Date(item.createdAt).toLocaleDateString('en-GB')
+            ];
+            tableRows.push(itemData);
+        });
+
+        doc.autoTable({
+            startY: 38,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: {fillColor: [30, 30, 30]}
+        });
+
+        doc.save('PahanaEdu_Items_Report.pdf');
+    }
+
+    function downloadItemsAsCSV() {
+        if (currentItems.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const headers = "ItemID,Name,UnitPrice,StockQuantity,CreatedAt";
+        const csvRows = [headers];
+
+        currentItems.forEach(item => {
+            const row = [
+                item.id,
+                `"\${item.name}"`,
+                item.unitPrice,
+                item.stockQuantity,
+                `"\${new Date(item.createdAt).toISOString()}"`
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const csvString = csvRows.join('\\n');
+        const blob = new Blob([csvString], {type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "PahanaEdu_Items_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     function handleSearchInput() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             fetchItems(searchInput.value);
-        }, 300); // Debounce for 300ms
+        }, 900);
     }
 
-    // --- Initialization Function ---
-    // This function will be called once the page is fully loaded
     function initItemPage() {
         console.log('initItemPage() called. Assigning DOM elements and attaching listeners.');
 
-        // Assign DOM elements once the document is ready
         itemTableBody = document.getElementById('itemTableBody');
         loadingIndicator = document.getElementById('loadingIndicator');
         messageDisplay = document.getElementById('messageDisplay');
@@ -727,12 +760,10 @@
         unitPriceField = document.getElementById('unitPrice');
         stockQuantityField = document.getElementById('stockQuantity');
 
-        // Assign error message elements
         nameError = document.getElementById('nameError');
         unitPriceError = document.getElementById('unitPriceError');
         stockQuantityError = document.getElementById('stockQuantityError');
 
-        // View Modal elements
         itemViewModal = document.getElementById('itemViewModal');
         closeItemViewModalBtn = document.getElementById('closeItemViewModalBtn');
         viewItemId = document.getElementById('viewItemId');
@@ -744,7 +775,6 @@
         viewItemUpdatedBy = document.getElementById('viewItemUpdatedBy');
         viewItemUpdatedAt = document.getElementById('viewItemUpdatedAt');
 
-        // Restock Modal elements
         restockModal = document.getElementById('restockModal');
         closeRestockModalBtn = document.getElementById('closeRestockModalBtn');
         cancelRestockFormBtn = document.getElementById('cancelRestockFormBtn');
@@ -759,14 +789,12 @@
         saveRestockBtn = document.getElementById('saveRestockBtn');
 
 
-        // --- Event Delegation ---
         document.body.addEventListener('click', (event) => {
-            // Add New Item button
             if (event.target && (event.target.id === 'addItemBtn' || event.target.closest('#addItemBtn'))) {
                 console.log('Add Item button clicked via delegation!');
                 openAddModal();
             }
-            // View item button
+
             if (event.target && event.target.classList.contains('view-btn')) {
                 console.log('View button clicked via delegation!');
                 openViewModal(event.target.dataset.itemId);
@@ -774,7 +802,7 @@
                 console.log('View icon clicked via delegation!');
                 openViewModal(event.target.closest('.view-btn').dataset.itemId);
             }
-            // Edit item button
+
             if (event.target && event.target.classList.contains('edit-btn')) {
                 console.log('Edit button clicked via delegation!');
                 openEditModal(event.target.dataset.itemId);
@@ -782,7 +810,7 @@
                 console.log('Edit icon clicked via delegation!');
                 openEditModal(event.target.closest('.edit-btn').dataset.itemId);
             }
-            // Restock item button
+
             if (event.target && event.target.classList.contains('restock-btn')) {
                 console.log('Restock button clicked via delegation!');
                 openRestockModal(event.target.dataset.itemId);
@@ -790,7 +818,7 @@
                 console.log('Restock icon clicked via delegation!');
                 openRestockModal(event.target.closest('.restock-btn').dataset.itemId);
             }
-            // Delete item button
+
             if (event.target && event.target.classList.contains('delete-btn')) {
                 console.log('Delete button clicked via delegation!');
                 deleteItem(event.target.dataset.itemId);
@@ -800,7 +828,6 @@
             }
         });
 
-        // Attach direct listeners for modal controls and search/refresh
         if (closeModalBtn) closeModalBtn.addEventListener('click', closeItemModal);
         if (cancelFormBtn) cancelFormBtn.addEventListener('click', closeItemModal);
         if (itemForm) itemForm.addEventListener('submit', handleItemFormSubmit);
@@ -811,12 +838,36 @@
         if (searchInput) searchInput.addEventListener('input', handleSearchInput);
         if (refreshBtn) refreshBtn.addEventListener('click', () => fetchItems(searchInput.value));
 
-        // Initial data load
         fetchItems();
-        feather.replace(); // Initialize icons on page load
+        feather.replace();
         console.log('Item page initialization complete.');
     }
 
-    // Call the initialization function once the DOM is fully loaded
+    const exportBtn = document.getElementById('exportBtn');
+    const exportMenu = document.getElementById('exportMenu');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (exportMenu && !exportBtn.contains(e.target)) exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadItemsAsPDF();
+        exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadItemsAsCSV();
+        exportMenu.classList.add('hidden');
+    });
+
     document.addEventListener('DOMContentLoaded', initItemPage);
 </script>

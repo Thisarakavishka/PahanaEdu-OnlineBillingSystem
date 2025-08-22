@@ -260,4 +260,47 @@ public class ItemServiceImpl implements ItemService {
             DBUtil.closeConnection(connection);
         }
     }
+
+    @Override
+    public List<ItemDTO> getAllDeletedItems() throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            List<ItemEntity> itemEntities = itemDAO.getAllDeletedItems(connection);
+            return ItemMapper.toDTOList(itemEntities);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during get all deleted items: " + e.getMessage(), e);
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+    }
+
+    @Override
+    public boolean restoreItem(int id) throws ClassNotFoundException {
+        try (Connection connection = DBUtil.getConnection()) {
+            connection.setAutoCommit(false); // Use a transaction
+
+            // 1. Find the record of the item that was deleted.
+            ItemEntity deletedItemRecord = itemDAO.searchDeletedById(connection, id);
+            if (deletedItemRecord == null) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_NOT_FOUND);
+            }
+
+            // 2. Business logic: Check if another active item has taken its name.
+            if (itemDAO.existsByName(connection, deletedItemRecord.getName())) {
+                throw new PahanaEduOnlineBillingSystemException(ExceptionType.ITEM_ALREADY_EXISTS);
+            }
+
+            // 3. If everything is clear, perform the restore.
+            boolean isRestored = itemDAO.restoreItem(connection, id);
+            if (isRestored) {
+                connection.commit();
+                LOGGER.info("Item with ID " + id + " restored successfully.");
+            } else {
+                connection.rollback();
+            }
+            return isRestored;
+
+        } catch (SQLException e) {
+            throw new PahanaEduOnlineBillingSystemException(ExceptionType.DATABASE_ERROR);
+        }
+
+    }
 }

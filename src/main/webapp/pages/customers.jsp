@@ -20,13 +20,31 @@
             <h1 class="text-2xl font-bold text-gray-800">Customer Management</h1>
             <p class="text-gray-600">Manage customer accounts in your system.</p>
         </div>
-        <c:if test='<%= "ADMIN".equals(role) %>'>
-            <button id="addCustomerBtn"
-                    class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 transition duration-200 ease-in-out shadow-md">
-                <i data-feather="plus-circle" class="w-5 h-5"></i>
-                <span>Add New Customer</span>
-            </button>
-        </c:if>
+        <div class="flex items-center space-x-2">
+            <div class="relative inline-block text-left">
+                <button id="exportBtn"
+                        class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md inline-flex items-center space-x-2 hover:bg-gray-50">
+                    <i data-feather="download" class="w-5 h-5"></i>
+                    <span>Export</span>
+                </button>
+                <div id="exportMenu"
+                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10">
+                    <div class="py-1">
+                        <a href="#" id="exportPdfBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as PDF</a>
+                        <a href="#" id="exportCsvBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export
+                            as CSV</a>
+                    </div>
+                </div>
+            </div>
+            <c:if test='<%= "ADMIN".equals(role) %>'>
+                <button id="addCustomerBtn"
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-md inline-flex items-center space-x-2 shadow-md">
+                    <i data-feather="plus-circle" class="w-5 h-5"></i>
+                    <span>Add New Customer</span>
+                </button>
+            </c:if>
+        </div>
     </div>
 
     <!-- Customer List Card -->
@@ -152,110 +170,80 @@
 <!-- View Customer Modal -->
 <div id="customerViewModal"
      class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-3xl relative">
-
-        <!-- Close Button -->
-        <button id="closeCustomerViewModalBtn"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl relative">
+        <button id="closeCustomerViewModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
             <i data-feather="x" class="w-6 h-6"></i>
         </button>
 
-        <!-- Title -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-3">Customer Details</h2>
+        <div class="flex items-center space-x-4 mb-6 border-b pb-4">
+            <div class="bg-gray-800 text-white rounded-full p-3">
+                <i data-feather="user" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h2 id="viewCustomerName" class="text-2xl font-bold text-gray-800">Customer Name</h2>
+                <p id="viewCustomerAccountNumber" class="text-gray-500 font-mono"></p>
+            </div>
+        </div>
 
-        <!-- Details Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer ID</label>
-                <p id="viewCustomerId" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Contact Information</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm bg-gray-50">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">PHONE</span>
+                    <strong id="viewCustomerPhone" class="text-gray-800"></strong>
+                </div>
+                <hr>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">ADDRESS</span>
+                    <strong id="viewCustomerAddress" class="text-gray-800 text-right"></strong>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Account Number</label>
-                <p id="viewCustomerAccountNumber"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Customer Name</label>
-                <p id="viewCustomerName" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Address</label>
-                <p id="viewCustomerAddress"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
-                <p id="viewCustomerPhone" class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Units Consumed</label>
-                <p id="viewCustomerUnitsConsumed"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Created By</label>
-                <p id="viewCustomerCreatedBy"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Created At</label>
-                <p id="viewCustomerCreatedAt"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated By</label>
-                <p id="viewCustomerUpdatedBy"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Last Updated At</label>
-                <p id="viewCustomerUpdatedAt"
-                   class="mt-1 px-3 py-2 bg-gray-50 border rounded-lg text-gray-800 text-sm"></p>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Account History</h3>
+            <div class="border rounded-lg p-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between"><span>Total Units Consumed:</span> <strong
+                        id="viewCustomerUnitsConsumed" class="text-gray-800"></strong></div>
+                <hr class="my-1">
+                <div class="flex justify-between"><span>Created By:</span> <strong id="viewCustomerCreatedBy"
+                                                                                   class="text-gray-800"></strong></div>
+                <div class="flex justify-between"><span>Created At:</span> <strong id="viewCustomerCreatedAt"
+                                                                                   class="text-gray-800"></strong></div>
+                <hr class="my-1">
+                <div class="flex justify-between"><span>Last Updated By:</span> <strong id="viewCustomerUpdatedBy"
+                                                                                        class="text-gray-800"></strong>
+                </div>
+                <div class="flex justify-between"><span>Last Updated At:</span> <strong id="viewCustomerUpdatedAt"
+                                                                                        class="text-gray-800"></strong>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 
-<%-- All JavaScript template literals (backticks ` and ${}) MUST be escaped with a backslash (\) to prevent JSP parsing errors. --%>
 <script>
-    // Global variables for DOM elements (declared but not assigned immediately)
+    let currentCustomers = [];
+    let searchTimeout;
+
     let customerTableBody, loadingIndicator, messageDisplay, messageText, searchInput, refreshBtn, customerModal,
         closeModalBtn, cancelFormBtn, customerForm, modalTitle, saveCustomerBtn;
 
-    // Form fields (declared but not not assigned immediately)
     let customerIdField, accountNumberField, nameField, addressField, phoneField, unitsConsumedField;
 
-    // Error message elements
     let accountNumberError, nameError, addressError, phoneError, unitsConsumedError;
 
-    // View Modal elements
     let customerViewModal, closeCustomerViewModalBtn, viewCustomerId, viewCustomerAccountNumber, viewCustomerName,
         viewCustomerAddress, viewCustomerPhone, viewCustomerUnitsConsumed, viewCustomerCreatedBy, viewCustomerCreatedAt,
         viewCustomerUpdatedBy, viewCustomerUpdatedAt;
 
-    // Get user role and ID from hidden inputs in dashboard.jsp
-    // FIX: Initialize userRole and loggedInUserId directly from hidden inputs
     const loggedInUserRole = document.getElementById('userRoleHiddenInput').value;
     const loggedInUserId = document.getElementById('userIdHiddenInput') ? parseInt(document.getElementById('userIdHiddenInput').value) : null;
-    const INITIAL_ADMIN_ID = 1; // Constant for initial admin ID
+    const INITIAL_ADMIN_ID = 1;
 
-    // Function to display messages (success or error), Hide after 5 seconds
-    function showMessage(message, type = 'success') {
-        messageText.textContent = message;
-        messageDisplay.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-        if (type === 'success') {
-            messageDisplay.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-        } else {
-            messageDisplay.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-        }
-        messageDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            messageDisplay.classList.add('hidden');
-        }, 5000);
-    }
+    const showMessage = showToast;
 
-    // Function to fetch customers from the backend
     async function fetchCustomers(searchTerm = '') {
         console.log('Fetching customers with search term:', searchTerm);
         loadingIndicator.classList.remove('hidden');
@@ -274,7 +262,7 @@
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to fetch customers.');
             }
-
+            currentCustomers = data;
             renderCustomers(data);
             console.log('Customers fetched and rendered successfully.');
         } catch (error) {
@@ -286,7 +274,6 @@
         }
     }
 
-    // Function to render customers in the table
     function renderCustomers(customers) {
         customerTableBody.innerHTML = ''; // Clear existing rows
 
@@ -354,7 +341,6 @@
         feather.replace(); // Re-render feather icons
     }
 
-    // Function to clear all validation error messages
     function clearValidationErrors() {
         accountNumberError.classList.add('hidden');
         nameError.classList.add('hidden');
@@ -363,7 +349,6 @@
         unitsConsumedError.classList.add('hidden');
     }
 
-    // Function to validate the form fields
     function validateForm() {
         clearValidationErrors(); // Clear previous errors
         let isValid = true;
@@ -417,7 +402,6 @@
         return isValid;
     }
 
-    // Open Add Customer Modal
     function openAddModal() {
         console.log('Attempting to open Add Customer modal.');
         modalTitle.textContent = 'Add New Customer';
@@ -431,7 +415,6 @@
         console.log('Add Customer modal should be visible.');
     }
 
-    // Generate a simple 8-digit account number (YYMMDDXX)
     function generateAccountNumber() {
         const now = new Date();
         const year = String(now.getFullYear()).slice(-2);
@@ -442,7 +425,6 @@
         return year + month + day + random; // Example: 25080542
     }
 
-    // Close Modals
     function closeCustomerModal() {
         customerModal.classList.add('hidden');
         clearValidationErrors(); // Clear errors when closing
@@ -454,26 +436,20 @@
         console.log('Customer View modal closed.');
     }
 
-    // Open View Customer Modal
     async function openViewModal(accountNumber) {
-        console.log('Attempting to open View Customer modal for Account Number:', accountNumber);
         try {
             const response = await fetch(getContextPath() + '/customers?accountNumber=' + encodeURIComponent(accountNumber));
             const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch customer details.');
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch customer details for viewing.');
-            }
-
-            viewCustomerId.textContent = data.id;
-            viewCustomerAccountNumber.textContent = data.accountNumber;
-            viewCustomerName.textContent = data.name;
-            viewCustomerAddress.textContent = data.address || '-';
-            viewCustomerPhone.textContent = data.phone;
-            viewCustomerUnitsConsumed.textContent = data.unitsConsumed + ' units';
-            // Display usernames, which are now provided by the servlet
-            viewCustomerCreatedBy.textContent = data.createdBy || '-';
-            viewCustomerCreatedAt.textContent = data.createdAt
+            // Populate the new modal structure
+            document.getElementById('viewCustomerName').textContent = data.name;
+            document.getElementById('viewCustomerAccountNumber').textContent = 'Account #' + data.accountNumber;
+            document.getElementById('viewCustomerPhone').textContent = data.phone;
+            document.getElementById('viewCustomerAddress').textContent = data.address || '-';
+            document.getElementById('viewCustomerUnitsConsumed').textContent = data.unitsConsumed + ' units';
+            document.getElementById('viewCustomerCreatedBy').textContent = data.createdBy || '-';
+            document.getElementById('viewCustomerCreatedAt').textContent = data.createdAt
                 ? new Date(data.createdAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
@@ -482,8 +458,8 @@
                 hour: '2-digit',
                 minute: '2-digit'
             }) : '-';
-            viewCustomerUpdatedBy.textContent = data.updatedBy || '-';
-            viewCustomerUpdatedAt.textContent = data.updatedAt
+            document.getElementById('viewCustomerUpdatedBy').textContent = data.updatedBy || '-';
+            document.getElementById('viewCustomerUpdatedAt').textContent = data.updatedAt
                 ? new Date(data.updatedAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
@@ -493,15 +469,67 @@
                 minute: '2-digit'
             }) : '-';
 
+
             customerViewModal.classList.remove('hidden');
-            console.log('View Customer modal should be visible with data:', data);
+            feather.replace();
         } catch (error) {
-            console.error('Error opening view modal:', error);
-            showMessage(error.message || 'Failed to load customer details for viewing.', 'error');
+            showMessage(error.message || 'Failed to load customer details.', 'error');
         }
     }
 
-    // Open Edit Customer Modal
+    function downloadCustomersAsPDF() {
+        if (currentCustomers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("Customer Report - Pahana Edu", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Report generated on: \${new Date().toLocaleDateString()}`, 14, 30);
+        const tableColumn = ["Account No.", "Name", "Phone", "Address", "Units Consumed", "Created At"];
+        const tableRows = [];
+        currentCustomers.forEach(cust => {
+            const custData = [
+                cust.accountNumber, cust.name, cust.phone, cust.address || '-', cust.unitsConsumed, new Date(cust.createdAt).toLocaleString('en-GB')
+            ];
+            tableRows.push(custData);
+        });
+        doc.autoTable({
+            startY: 38,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: {fillColor: [30, 30, 30]}
+        });
+        doc.save('PahanaEdu_Customers_Report.pdf');
+    }
+
+    function downloadCustomersAsCSV() {
+        if (currentCustomers.length === 0) {
+            showMessage("No data to export.", "error");
+            return;
+        }
+        const headers = "AccountNumber,Name,Address,Phone,UnitsConsumed";
+        const csvRows = [headers];
+        currentCustomers.forEach(cust => {
+            const row = [`"\${cust.accountNumber}"`, `"\${cust.name}"`, `"\${cust.address || ''}"`, `"\${cust.phone}"`, cust.unitsConsumed];
+            csvRows.push(row.join(','));
+        });
+        const csvString = csvRows.join('\\n');
+        const blob = new Blob([csvString], {type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "PahanaEdu_Customers_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     async function openEditModal(accountNumber) {
         console.log('Attempting to open Edit Customer modal for account:', accountNumber);
         try {
@@ -530,7 +558,6 @@
         }
     }
 
-    // Handle form submission (Add/Edit)
     async function handleCustomerFormSubmit(e) {
         e.preventDefault(); // Prevent default form submission
         console.log('Customer form submitted.');
@@ -580,7 +607,6 @@
         }
     }
 
-    // Handle Delete Customer
     async function deleteCustomer(accountNumber) {
         if (!confirm('Are you sure you want to delete customer with Account Number: ' + accountNumber + '? This action cannot be undone.')) {
             console.log('Customer deletion cancelled.');
@@ -606,9 +632,6 @@
         }
     }
 
-    // Search functionality with debounce
-    let searchTimeout;
-
     function handleSearchInput() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -616,8 +639,6 @@
         }, 900); // Debounce for 900ms
     }
 
-    // --- Initialization Function ---
-    // This function will be called once the page is fully loaded
     function initCustomerPage() {
         console.log('initCustomerPage() called. Assigning DOM elements and attaching listeners.');
 
@@ -712,6 +733,31 @@
         console.log('Customer page initialization complete.');
     }
 
-    // Call the initialization function once the DOM is fully loaded
+    const exportBtn = document.getElementById('exportBtn');
+    const exportMenu = document.getElementById('exportMenu');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportMenu.classList.toggle('hidden');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (exportMenu && !exportBtn.contains(e.target)) exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadCustomersAsPDF();
+        exportMenu.classList.add('hidden');
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadCustomersAsCSV();
+        exportMenu.classList.add('hidden');
+    });
+
     document.addEventListener('DOMContentLoaded', initCustomerPage);
 </script>
