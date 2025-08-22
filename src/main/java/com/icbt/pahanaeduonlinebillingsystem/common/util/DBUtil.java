@@ -76,7 +76,6 @@ public class DBUtil {
         }
     }
 
-    // --- Your other utility methods (closeConnection, rollbackConnection, etc.) ---
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {

@@ -45,14 +45,6 @@
                    href="dashboard.jsp?page=users"><i data-feather="users" class="w-5 h-5"></i><span>Users</span></a>
             </li>
             <li>
-                <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "customers".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
-                   href="dashboard.jsp?page=customers"><i data-feather="user-plus"
-                                                          class="w-5 h-5"></i><span>Customers</span></a></li>
-            <li>
-                <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "items".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
-                   href="dashboard.jsp?page=items"><i data-feather="package" class="w-5 h-5"></i><span>Items</span></a>
-            </li>
-            <li>
                 <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "history".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
                    href="dashboard.jsp?page=history">
                     <i data-feather="archive" class="w-5 h-5"></i>
@@ -60,6 +52,14 @@
                 </a>
             </li>
             <% } %>
+            <li>
+                <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "customers".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
+                   href="dashboard.jsp?page=customers"><i data-feather="user-plus"
+                                                          class="w-5 h-5"></i><span>Customers</span></a></li>
+            <li>
+                <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "items".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
+                   href="dashboard.jsp?page=items"><i data-feather="package" class="w-5 h-5"></i><span>Items</span></a>
+            </li>
             <li>
                 <a class="flex items-center space-x-3 p-3 rounded-lg transition-colors <%= "reports".equals(currentPage) ? "bg-gray-800 text-white font-semibold shadow-inner" : "hover:bg-gray-800 hover:text-white" %>"
                    href="dashboard.jsp?page=reports"><i data-feather="bar-chart-2"
